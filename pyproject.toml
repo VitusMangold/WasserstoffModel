@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "wasserstoffmodel"
+version = "0.1.0"
+description = ""
+authors = ["Johannes Nägele <johannes-naegele@web.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.31.0"
+networkx = "^3.2.1"
+matplotlib = "^3.8.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

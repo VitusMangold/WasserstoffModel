@@ -1,0 +1,17 @@
+poetry.lock
+*.log
+*.synctex(busy)
+*.aux
+*.auxlock
+*.bcf
+*.nav
+*.out
+*.pdf
+*.pyg
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.pygtex
+*.pygstyle
+*.vrb

@@ -15,3 +15,5 @@ poetry.lock
 *.pygtex
 *.pygstyle
 *.vrb
+*.bbl
+*.blg

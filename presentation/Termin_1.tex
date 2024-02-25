@@ -1,0 +1,280 @@
+% !TeX program = lualatex
+\documentclass[11pt, ngerman, hyperref={unicode}]{beamer}
+
+\usefonttheme{professionalfonts}
+\usetheme{CambridgeUS}
+\usecolortheme{rose}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+%\usepackage{luatextra}
+%\defaultfontfeatures{Ligatures=TeX,Numbers=OldStyle}
+\setmainfont{Latin Modern Sans}
+\setsansfont{Latin Modern Sans}
+\setmonofont{Menlo}
+%\setmathfont{latinmodern-math.otf}
+\setmathrm{Latin Modern Roman}
+
+\usepackage[ngerman]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\setbeamertemplate{theorems}[numbered]
+\newtheorem*{definition*}{Definition}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{animate}
+\usepackage{algorithm2e}[plain, noline, ngerman]
+\usepackage{minted}
+\usepackage{csquotes}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{cd}
+\usetikzlibrary{babel}
+\usetikzlibrary{pgfplots.groupplots}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{external} 
+\tikzexternalize
+
+\makeatletter
+\newcommand\pgfinvisible{\pgfsys@begininvisible}
+\newcommand\pgfshown{\pgfsys@endinvisible}
+\makeatother
+
+%\usepackage[charsperline=65]{jlcode}
+\usepackage[backend=biber,style=verbose]{biblatex}
+\addbibresource{./literatur.bib}
+\newcounter{footcounter}
+\setcounter{footcounter}{1}
+
+\makeatletter
+\def\@makefnmark{\hbox{{{\usebeamercolor[fg]{footnote mark}\usebeamerfont*{footnote mark} [\hyperlink{\thefootcounter}{\@thefnmark]}}}}}
+
+\def\@makefntext#1{%
+	\def\insertfootnotetext{ \hypertarget{\thefootcounter}{#1}}%
+	\def\insertfootnotemark{\@makefnmark}%
+	\usebeamertemplate***{footnote}\stepcounter{footcounter}}    
+\makeatother
+\AtEveryCitekey{\clearfield{url}} % keine url in footcite
+\DeclareFieldFormat{title}{#1}
+\DeclareFieldFormat{citetitle}{#1}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+\title{Wasserstoff für Deutschland}
+\author[Mangold, Nägele, Radmer]{Vitus Mangold, Johannes Nägele, Lena-René Radmer}
+%\date{May 07, 2022}
+\date{\today}
+
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\cJ}{\mathcal{J}}
+\newcommand{\cK}{\mathcal{K}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cQ}{\mathcal{Q}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cU}{\mathcal{U}}
+\newcommand{\cV}{\mathcal{V}}
+\newcommand{\cW}{\mathcal{W}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cY}{\mathcal{Y}}
+\newcommand{\cZ}{\mathcal{Z}}
+%% math blackboard bold
+\newcommand{\A}{\mathbb{A}}
+\newcommand{\B}{\mathbb{B}}
+%\newcommand{\C}{\mathbb{C}}
+\newcommand{\D}{\mathbb{D}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\F}{\mathbb{F}}
+%\newcommand{\G}{\mathbb{G}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\J}{\mathbb{J}}
+\newcommand{\K}{\mathbb{K}}
+\newcommand{\M}{\mathbb{M}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+
+%\newcommand{\U}{\mathbb{U}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\W}{\mathbb{W}}
+\newcommand{\X}{\mathbb{X}}
+\newcommand{\Y}{\mathbb{Y}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\dint}{\, \mathrm{d}}
+
+\newcounter{slideIndex}
+\setcounter{slideIndex}{1}
+
+\pgfmathdeclarefunction{gauss}{2}{%
+	\pgfmathparse{1/(#2*sqrt(2*pi))*exp(-((x-#1)^2)/(2*#2^2))}%
+}
+
+\pgfmathdeclarefunction{cauchy}{1}{%
+	\pgfmathparse{1/((1+(x)^2)*pi)+#1}%
+}
+
+\ExplSyntaxOn
+\DeclareExpandableDocumentCommand \round { O{0} m }
+{ \fp_eval:n { round(#2,#1) } }
+\ExplSyntaxOff
+
+\theoremstyle{definition} % insert bellow all blocks you want in normal text
+\newtheorem{theorem1}{Theorem}
+\newtheorem*{definition1}{Definition}
+\newtheorem*{remark}{Bemerkung}
+
+\begin{document}
+	\setbeamertemplate{title page}[default][colsep=-4bp,rounded=true]
+	\maketitle
+	\begin{frame}{Inhalt}
+		\tableofcontents
+	\end{frame}
+	\section{Einführung und Intuition}
+	\begin{frame}{Problemstellung I}
+		Foo
+		\begin{itemize}
+			\item bar
+			\item foobar
+		\end{itemize}
+	\end{frame}
+
+	\section{Datenlage}
+
+	\begin{frame}{Problemstellung I}
+		Foo
+		\begin{itemize}
+			\item bar
+			\item foobar
+		\end{itemize}
+	\end{frame}
+
+	\section{Lastflussberechnung}
+
+	\begin{frame}{Bespielcode}
+		\vspace{-0.1cm}
+		Definiere den AM-Algorithmus mit normalverteiltem Kern nach \footcite[247-248]{Givens2012}.
+		\vspace{-0.1cm}
+		\definecolor{LightBlue}{RGB}{220,220,255}
+		\setbeamercolor{block title example}{fg = LightBlue, bg = LightBlue}
+		\begin{exampleblock}{}
+			\vspace{-0.1cm}
+			\SetAlgoNoLine{
+			\begin{algorithm}[H]
+				Wähle für die Zielverteilung $\pi$ bei $t=0$ die Startwerte $X_0$, $\mu_0$ und $\Sigma_0$ mit $\pi(X_0)>0$ sowie $\beta_{t+1} = 1/(t+1)$. Bestimme $X_{n}$ mit
+				
+				\While{$t < n$}{
+				Ziehe $X^*$ aus $Q=\cN(X_t,\lambda\Sigma_t)$ und $\alpha$ aus $\cU([0,1])$.
+				
+				\eIf{$\pi(X^*)/\pi(X_{t})>\alpha$}{$X_{t+1} \gets X^*$}{$X_{t+1} \gets X_t$}
+				$\mu_{t+1} \gets \mu_t + \beta_{t+1} (X_{t+1}-\mu_{t})$ 
+				
+				$\Sigma_{t+1} \gets \Sigma_t + \beta_{t+1} [(X_{t+1} - \mu_t)(X_{t+1} - \mu_t)^T-\Sigma_t]$
+%				\begin{align*}
+%					\mu_{t+1}&=\mu_t + \beta_{t+1} (X_{t+1}-\mu_{t+1}) \\ 
+%					\Sigma_{t+1}&=\Sigma_t + \beta_{t+1} \left[(X_{t+1} - \mu_t)(X_{t+1} - \mu_t)^T-X_t\right]\\
+%				\end{align*}
+				}
+			\end{algorithm}
+			}
+		\vspace{-0.1cm}
+		\end{exampleblock}
+    \end{frame}
+	
+
+	\begin{frame}[fragile]{Noch mehr Beispielcode}
+			
+			\begin{overprint}
+				\onslide<1>
+				\begin{minted}[breaklines, numbersep=3pt, gobble=4, fontsize=\footnotesize, framesep=2mm, tabsize=4]{julia}
+				using LinearAlgebra # for eigenvalues
+				using Pipe:@pipe # for cleaner code
+				
+				function Q(n, j, i) # variable part of the transition kernel
+					return (n-j) in [-i, i] ? 1/2 : 0 # uniform distribution
+				end
+				
+				function P(m, n, j, β) # assumes all values have probability > 0
+					i = (m == n) ? 1 : 2
+					ψ = (m == n == 1) | (m != n == 4) ? (1-β) : (1-β)/2
+					return (j == n) ? β*1/3 + ψ : (1-β)*Q(n, j, i) + β*1/3
+				end
+				\end{minted}
+				\onslide<2>
+				\begin{minted}[breaklines, numbersep=3pt, gobble=4, fontsize=\footnotesize, framesep=2mm, tabsize=4]{julia}
+				β = 1/2 # mixing parameter
+				state = [1,3,4] # state space
+				cartesian = Iterators.product(state, state) |>
+					collect |> permutedims
+				transition = zeros(9,9)
+				# fill the transition matrix
+				for n in 1:9
+					for j in 1:9
+						value_n = cartesian[n]
+						value_j = cartesian[j]
+						transition[n,j] = (value_n[2] == value_j[1]) ? 
+						P(value_n[1], value_n[2], value_j[2], β) : 0
+					end
+				end
+				\end{minted}
+				\onslide<3>
+				\begin{minted}[breaklines, numbersep=3pt, gobble=4, fontsize=\footnotesize, framesep=2mm, tabsize=4]{jlcon}
+				julia> round.(transition, digits=2)
+				9×9 Array{Float64,2}:
+				0.67  0.17  0.17  0.0   0.0   0.0   0.0   0.0   0.0
+				0.0   0.0   0.0   0.42  0.42  0.17  0.0   0.0   0.0
+				0.0   0.0   0.0   0.0   0.0   0.0   0.17  0.17  0.67
+				0.42  0.42  0.17  0.0   0.0   0.0   0.0   0.0   0.0
+				0.0   0.0   0.0   0.17  0.42  0.42  0.0   0.0   0.0
+				0.0   0.0   0.0   0.0   0.0   0.0   0.17  0.17  0.67
+				0.42  0.42  0.17  0.0   0.0   0.0   0.0   0.0   0.0
+				0.0   0.0   0.0   0.42  0.42  0.17  0.0   0.0   0.0
+				0.0   0.0   0.0   0.0   0.0   0.0   0.17  0.42  0.42
+				\end{minted}
+				\onslide<4>
+				\begin{minted}[breaklines, numbersep=3pt, gobble=4, fontsize=\footnotesize, framesep=2mm, tabsize=4]{julia}
+				# find eigenvectors
+				equilibrium = transpose(transition) |> eigvecs |> transpose
+				# find eigenvector with eigenvalue 1
+				eig = @pipe transpose(transition) |> eigvals |> 
+					isapprox.(_, 1) |> findfirst(x -> x == true, _)
+				μ = @pipe equilibrium[eig,:] |> 
+					convert(Vector{Real}, _) |> transpose
+				# normalize
+				μ = μ/sum(μ)
+				\end{minted}
+				\begin{minted}[breaklines, numbersep=3pt, gobble=4, fontsize=\footnotesize, framesep=2mm, tabsize=4]{jlcon}
+				julia> sum(μ[1:3]) # I use Julia btw
+				0.35166240409207217
+				\end{minted}
+			\end{overprint}
+	\end{frame}
+
+	\section{Ausblick}
+	\begin{frame}{Zusammenfassung}
+		\begin{itemize}
+			\item foo
+		\end{itemize}
+	\end{frame}
+
+	\setbeamertemplate{frametitle continuation}{}
+	\begin{frame}[allowframebreaks]{References}
+		\printbibliography
+	\end{frame}
+\end{document}

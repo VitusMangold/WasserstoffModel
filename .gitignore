@@ -18,3 +18,5 @@ poetry.lock
 *.bbl
 *.blg
 *.DS_Store
+presentation/termin1/Präsentation.fdb_latexmk
+presentation/termin1/Präsentation.fls

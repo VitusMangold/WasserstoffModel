@@ -8,7 +8,7 @@
 % Contact       Jannik Klemm,  Jannik.Klemm@dlr.de
 % Copyright (C) 2008-2022 DLR                                   __/|__	%                                                              /_/_/_/	  
 %                                                                |/ DLR      
-\RequirePackage{currfile}
+% \RequirePackage{currfile}
 % New design should show the text on the top
 \documentclass[aspectratio=169,t]{beamer}
 
@@ -18,7 +18,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{qrcode}
 \usepackage{tikz}
-\usetikzlibrary {shapes.geometric}
+\usetikzlibrary{shapes.geometric}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
 %\pgfplotsset{compat=1.9,
@@ -45,6 +45,7 @@
 \subtitle{} 
 \date{29.02.2024}
 \author{}
+\setbeamertemplate{navigation symbols}{}
 
 
 % Add additional logo
@@ -129,40 +130,40 @@
 	\end{frame}
 
 	%---------------------------------
-\begin{frame}
-	\frametitle{Annahmen}
-	\vspace*{0mm}
-	\begin{minipage}{1\linewidth}
-		\begin{minipage}{.3\linewidth}
-			\begin{itemize}
-				\item Verbrauch
-				\item 1 toe = 11.63 megawatt-hours (MWh)
-			\end{itemize}
-		\end{minipage}
-		\hfill
-		\begin{minipage}{.7\linewidth}
-			\centering
-			\includegraphics[width=.9\linewidth]{Deutschland_Bedarf.png}
+% \begin{frame}
+% 	\frametitle{Annahmen}
+% 	\vspace*{0mm}
+% 	\begin{minipage}{1\linewidth}
+% 		\begin{minipage}{.3\linewidth}
+% 			\begin{itemize}
+% 				\item Verbrauch
+% 				\item 1 toe = 11.63 megawatt-hours (MWh)
+% 			\end{itemize}
+% 		\end{minipage}
+% 		\hfill
+% 		\begin{minipage}{.7\linewidth}
+% 			\centering
+% 			\includegraphics[width=.9\linewidth]{Deutschland_Bedarf.png}
 			
-		\end{minipage}
-	\end{minipage}	
+% 		\end{minipage}
+% 	\end{minipage}	
 
-\vspace*{4mm}
-	Quelle: https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas/
+% \vspace*{4mm}
+% 	Quelle: https://energy-industry-geolab.jrc.ec.europa.eu/energy-atlas/
 	
-\end{frame}
+% \end{frame}
 
 	%---------------------------------
 
 
-\begin{frame}
-	\frametitle{}
+% \begin{frame}
+% 	\frametitle{}
 	
-	\vspace*{-2mm}
-	%Verbrauch: https://www.statistikportal.de/de/ugrdl/ergebnisse/energie/pev#5238
-	%Erzeugung: https://www.statistikportal.de/de/ugrdl/ergebnisse/energie/swe#5897
-	\vspace*{0mm}
-\end{frame}
+% 	\vspace*{-2mm}
+% 	%Verbrauch: https://www.statistikportal.de/de/ugrdl/ergebnisse/energie/pev#5238
+% 	%Erzeugung: https://www.statistikportal.de/de/ugrdl/ergebnisse/energie/swe#5897
+% 	\vspace*{0mm}
+% \end{frame}
 %---------------------------------
 	
 
@@ -173,13 +174,11 @@
 			\begin{minipage}{1\linewidth}
 			\begin{minipage}{.5\linewidth}
 				\begin{itemize}
-					\item größeres Modell
-					\begin{itemize}
-						\item Deutschland aufgeteilt in 16 Bundesländer
-					\end{itemize}
-					\item 
-					\item
-					\item Powerflow Equations
+					\item ursprüngliche Idee: Deutschland aufgeteilt in 16 Bundesländer
+					\item kleines Problem: Zeitreihendaten nicht ohne Weiteres verfügbar
+					\item großes Problem: Keine gute Datensätze für Trassen zwischen Bundesländern
+					\item Idee: Kleinskaliger mit SMARD-Daten für die vier Regelzonen arbeiten
+					\item auch nicht wirklich gut: Zu Verbrauch/Produktion gibt es gute Daten, aber die Übertragung zwischen Netzen wird nicht abgebildet
 				\end{itemize}
 			\end{minipage}
 			\hfill
@@ -194,14 +193,51 @@
 	\end{frame}
 	%---------------------------------
 	
+	\begin{frame}
+		\frametitle{Daten: Open­Energy­Platform}
+		\begin{itemize}
+			\item große, offene Datenbank mit REST API
+			\item wir nutzen Daten, die auch für eTraGo-Paket (Transmission grid optimization) genutzt werden
+			\item ausreichend, um Hochspannungsnetz über ein Jahr zu modellieren
+			\item grid-Daten (ergo Standort/Geometrie) zu
+			\begin{itemize}
+				\item bus (Sammelschiene)
+				\item generator (Kraftwerke)
+				\item load (Verbrauch/Nachfrage)
+				\item storage (Speicher)
+				\item transformer (Wandler)
+				\item line (Stromtrasse)
+			\end{itemize}
+			\item Zeitreihendaten (ein Jahr viertelstündlich?) für
+			\begin{itemize}
+				\item load 
+				\item generator (sehr groß; gefiltertes JSON ca. $3{,}7$ GB)
+			\end{itemize}
+			\item eTraGo verwendet PyPSA (Python-Paket), werden wir voraussichtlich auch benutzen
+		\end{itemize}
+	\end{frame}
 	
+	\begin{frame}
+		\frametitle{Daten: Generierung}
+		\begin{itemize}
+			\item OpenStreetMap wird quasi von allen für Erstellung von Stromnetzdaten genutzt
+			\item Zeitreihen: ...
+			\item Zeitbezug für Version nicht ganz klar, aber wohl aktuell
+			\item man kann wohl komplette Datenbank über GitHub nachbauen, aber sehr aufwändig
+			\item genutzt wird in der Datenbank PostgreSQL, wir werden wahrscheinlich ein Format wie HDF5 nutzen.
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Beispielplot: Stromtrassen}
+		\vspace*{-1.8cm}
+		\hspace*{6cm}
+		\includegraphics[height=10cm]{./line.png}
+	\end{frame}
+
 	\begin{frame}
 		\frametitle{Powerflow Equations}
 		
-		\vspace*{-2mm}
-		
-		
-		\vspace*{0mm}
 	\end{frame}
 	%---------------------------------
 	
@@ -214,7 +250,12 @@
 		
 		\vspace*{6mm}
 		\begin{itemize}
-			\item weiter Daten suchen 
+			\item erste praktische Versuche mit PyPSA bzw. Lastflussberechnungen
+			\item weiter Daten suchen: Gasnetz, Bauvorhaben Wasserstoff
+			\item Aktuelle Daten liefern nur aktuelle Generatoren/Speicher
+			
+			Was ist welche Technologie? Was ist mit Energiewende?
+			\item Wie genau funktioniert Import/Export?
 			\item Stahlindustrie betrachten
 		\end{itemize}
 			

@@ -16,11 +16,12 @@ mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
 
 # base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/ego_pf_hv_generator_pq_set/rows"
 
-result = get("https://openenergy-platform.org/api/v0/schema/grid/tables/ego_pf_hv_generator_pq_set/rows/?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# result = get("https://openenergy-platform.org/api/v0/schema/grid/tables/ego_pf_hv_generator_pq_set/rows/?where=version=v0.4.6&where=scn_name=Status%20Quo")
 
-data = result.json()
-with open(mypath + "gen_pq.json", 'w') as f:
-    json.dump(data, f)
+# data = result.json()
+# with open(mypath + "gen_pq.json", 'w') as f:
+#     json.dump(data, f)
+
 # df = pd.DataFrame(data)
 # print(df.describe())
 # print(df)
@@ -140,10 +141,13 @@ def plot_df(df):
     # Add OSM basemap
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
 
-df_bus.to_feather('bus.feather', compression='zstd')
-plt.show()
-plot_df(df_bus)
-plt.show()
-plot_df(df_transformer)
-plt.show()
+df_bus = pd.read_parquet(mypath + "bus.parquet")
+df_transformer = pd.read_parquet(mypath + "transformer.parquet")
+df_line = pd.read_parquet(mypath + "line.parquet")
+# plot_df(df_bus)
+# plt.show()
+# plot_df(df_transformer)
+# plt.show()
 plot_df(df_line)
+# plt.show()
+plt.savefig("./presentation/termin1/line.png")

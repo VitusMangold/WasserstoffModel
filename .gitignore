@@ -17,3 +17,4 @@ poetry.lock
 *.vrb
 *.bbl
 *.blg
+*.DS_Store

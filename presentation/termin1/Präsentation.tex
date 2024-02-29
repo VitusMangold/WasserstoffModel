@@ -21,6 +21,7 @@
 \usetikzlibrary {shapes.geometric}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
+
 %\pgfplotsset{compat=1.9,
 	%title style={color=dlrdarkblue},
 	%tick label style = {color=dlrdarkblue},
@@ -81,28 +82,79 @@
 	%---------------------------------
 	\begin{frame}
 		\frametitle{Grober Überblick übers Projekt}
-		\vspace*{0mm}
+		\vspace*{-4mm}
+		\begin{minipage}{1\linewidth}
+			\begin{minipage}{.5\linewidth}
+				
+				\vspace*{-12mm}
+				
 		\begin{itemize}
 			\item Wollen das beschränkte Stromnetz Deutschlands modellieren
+			\vspace*{2mm}
+			
 			\begin{itemize}
 				\item [$\rightarrow$] Um Wasserstoffnetzwerk ergänzen
 			\end{itemize}
+		\vspace*{2mm}
+		
 		\item Gefälle von Nord- zu Süddeutschland bzgl. Stromproduktion und -verbrauch
+		\vspace*{2mm}
+		
 		\begin{itemize}
 			\item [$\rightarrow$] Verteilung von importiertem Strom
 		\end{itemize}
-		\item Für welche Gegebenheiten lohnt sich dieses Wasserstoffnetz?
-		\item Aktuell: Stromtrassen als Lösung
-		\item Problem: ungenutzter Strom 
-		\item Lösung: Strom in Form von Wasserstoff speichern und transportieren 
-		
-			 
+				 
 		\end{itemize}
+	\end{minipage}
+\hfill
+\begin{minipage}{.5\linewidth}
+\centering
+\includegraphics[width=.7\linewidth]{windkraft.jpg}
+
+\end{minipage}
+\end{minipage}	
 		
 			
 		
 	\end{frame}
-			
+
+
+		%---------------------------------
+	\begin{frame}
+		\frametitle{Grober Überblick übers Projekt}
+		\vspace*{-4mm}
+		\begin{minipage}{1\linewidth}
+			\begin{minipage}{.5\linewidth}
+				\vspace*{-12mm}
+				
+				\begin{itemize}
+					
+					\item Für welche Gegebenheiten lohnt sich dieses Wasserstoffnetz?
+						\vspace*{2mm}
+					
+					\item Aktuell: Stromtrassen als Lösung
+						\vspace*{2mm}
+					
+					\item Problem: ungenutzter Strom 
+						\vspace*{2mm}
+					
+					\item Lösung: Strom in Form von Wasserstoff speichern und transportieren 
+					
+					
+				\end{itemize}
+			\end{minipage}
+			\hfill
+			\begin{minipage}{.5\linewidth}
+				\centering
+				\includegraphics[width=.7\linewidth]{windkraft.jpg}
+				
+			\end{minipage}
+		\end{minipage}	
+		
+		
+		
+	\end{frame}
+	
 	%---------------------------------
 	
 	
@@ -196,11 +248,174 @@
 	
 	
 	\begin{frame}
-		\frametitle{Powerflow Equations}
+		\frametitle{Herleitung der Powerflow Equations}
 		
-		\vspace*{-2mm}
+		\vspace*{2mm}
+		\begin{minipage}{1\linewidth}
+			\begin{minipage}{.4\linewidth}
+				
+				gerichteter Graph eines Stromnetzes:
+
+			\end{minipage}
+			\hfill
+			\begin{minipage}{.6\linewidth}
+				\centering
+				
+				Admittanzmatrix:			
+				
+			\end{minipage}
+		\end{minipage}	
+	
+		\vspace*{4mm}
+			\begin{minipage}{1\linewidth}
+			\begin{minipage}{.4\linewidth}
+				
+			\begin{tikzpicture}[
+				> = stealth, % arrow head style
+				shorten > = 1pt, % don't touch arrow head to node
+				auto,
+				node distance = 3cm, % distance between nodes
+				semithick % line style
+				]
+				
+				
+				
+				\node (v3) {$v_3$};
+				\node (v1) [above right of=v3] {$v_1$};
+				\node (v2) [right of=v3] {$v_2$};
+				\node (v4) [below right of=v3] {$v_4$};
+				
+				
+				\path[->] (v1) edge node {$Z_1$} (v3);
+				\path[->] (v1) edge node {$Z_2$} (v2);
+				\path[->] (v3) edge node {$Z_3$} (v2);
+				\path[->] (v3) edge node {$Z_4$} (v4);
+				\path[->] (v2) edge node {$Z_5$} (v4);
+				
+				
+				
+			\end{tikzpicture}
+					
+			\end{minipage}
+			\hfill
+			\begin{minipage}{.6\linewidth}
+				\centering
+				
+				
+				$\left[Y\right] =$ $\left[ \begin{array}{rrrrr}
+				\frac{1}{Z_1} &  &  &  &\\
+				& \frac{1}{Z_2} & &  &\\
+				&  & \frac{1}{Z_3} &  &\\
+				&  &  & \frac{1}{Z_4}  &\\
+				&  &  &  & \frac{1}{Z_5}\\
+			\end{array}\right]$
 		
 		
+				
+			\end{minipage}
+		\end{minipage}	
+		
+		\end{frame}
+%---------------------------------
+
+\begin{frame}
+	\frametitle{Herleitung der Powerflow Equations}
+	
+	\vspace*{2mm}
+	\begin{minipage}{1\linewidth}
+		\begin{minipage}{.4\linewidth}
+			
+			gerichteter Graph eines Stromnetzes:
+			
+		\end{minipage}
+		\hfill
+		\begin{minipage}{.6\linewidth}
+			\centering
+			
+			Inzidenzmatrix:			
+			
+		\end{minipage}
+	\end{minipage}	
+	
+	\vspace*{4mm}
+	\begin{minipage}{1\linewidth}
+		\begin{minipage}{.4\linewidth}
+			
+			\begin{tikzpicture}[
+				> = stealth, % arrow head style
+				shorten > = 1pt, % don't touch arrow head to node
+				auto,
+				node distance = 3cm, % distance between nodes
+				semithick % line style
+				]
+				
+				\node (v3) {$v_3$};
+				\node (v1) [above right of=v3] {$v_1$};
+				\node (v2) [right of=v3] {$v_2$};
+				\node (v4) [below right of=v3] {$v_4$};
+				
+				
+				\path[->] (v1) edge node {$Z_1$} (v3);
+				\path[->] (v1) edge node {$Z_2$} (v2);
+				\path[->] (v3) edge node {$Z_3$} (v2);
+				\path[->] (v3) edge node {$Z_4$} (v4);
+				\path[->] (v2) edge node {$Z_5$} (v4);
+				
+			\end{tikzpicture}
+			
+		\end{minipage}
+		\hfill
+		\begin{minipage}{.6\linewidth}
+			\centering
+							
+			$\left[N\right] =\left[ \begin{array}{rrrr}
+				1 & -1 & 0 & 0 \\
+				1 & 0 & -1 & 0\\
+				0 & -1 & 1 & 0\\
+				0& 0 & 1 & -1 \\
+				0& 1 & 0 & -1 \\
+			\end{array}\right]$
+			
+				$$N_{ij} = \begin{cases}
+				1 & \text{wenn Knoten $j$ Startpunkt von Kante $i$ }\\
+				-1 & \text{wenn Knoten $j$ Endpunkt von Kante $i$  }\\
+				0 & \text{sonst} 
+			\end{cases}$$
+		
+		\end{minipage}
+	\end{minipage}	
+	
+	
+\end{frame}
+%--------------------------------
+
+\begin{frame}
+	
+		\frametitle{Herleitung der Powerflow Equations}
+		
+		\vspace*{2mm}
+	 
+	 \begin{itemize}
+	 	\item $I =$ Stromfluss einer Kante
+	 	
+	 	\item $I_0 =$ zufließende/abfließende Ströme
+	 	
+	 	\item $V =$ Spannungsversorgung der Knoten
+	 	
+	 	\item [$\rightarrow$] Kirchhoffsches Gesetz: ${I_0}^{T} + I^{T}[N] = 0$
+	 	
+	 	\item [$\rightarrow$] Ohmsches Gesetz: $ I = [Y][N]V$
+	 	
+	 	\item mit $M = [N]^T[Y][N]$
+	 	
+	 	\vspace{2mm}
+	 	
+	 	\item [$\rightarrow$] Kombination bringt: $ S_i = V_i \displaystyle \sum_{k=0} ^{n} [M^*]_{ik} {V_k}^*$
+	 	
+	 	\item $S_i =$ Stromverbrauch oder -einspeisung jedes Knoten
+	 	
+	 \end{itemize}
+	
 		\vspace*{0mm}
 	\end{frame}
 	%---------------------------------

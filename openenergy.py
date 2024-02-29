@@ -136,7 +136,8 @@ def plot_df(df):
     # Set the extent of the plot to the bounds of your geometries
     minx, miny, maxx, maxy = gdf.total_bounds
     ax.set_xlim(minx, maxx)
-    ax.set_ylim(miny, maxy)
+    print(maxy)
+    ax.set_ylim(miny, 7.5 * 1e6) # maxy
 
     # Add OSM basemap
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)

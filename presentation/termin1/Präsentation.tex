@@ -94,7 +94,6 @@
 			
 	%---------------------------------
 	
-	
 	\begin{frame}
 		\frametitle{Erste Schritte}
 		\vspace*{0mm}
@@ -167,6 +166,7 @@
 					\item großes Problem: Keine gute Datensätze für Trassen zwischen Bundesländern
 					\item Idee: Kleinskaliger mit SMARD-Daten für die vier Regelzonen arbeiten
 					\item auch nicht wirklich gut: Zu Verbrauch/Produktion gibt es gute Daten, aber die Übertragung zwischen Netzen wird nicht abgebildet
+					\item Datenportal zur aktuellen FfE-Studie nicht verfügbar
 				\end{itemize}
 			\end{minipage}
 			\hfill
@@ -208,17 +208,17 @@
 	\begin{frame}
 		\frametitle{Daten: Generierung}
 		\begin{itemize}
-			\item OpenStreetMap wird quasi von allen für Erstellung von Stromnetzdaten genutzt
-			\item Zeitreihen: ...
+			\item OpenStreetMap wird häufig für Erstellung von Stromnetzdaten genutzt
+			\item Nachfragezeitreihe mittels Standardlastprofil erstellt
 			\item Zeitbezug für Version nicht ganz klar, aber wohl aktuell
 			\item man kann wohl komplette Datenbank über GitHub nachbauen, aber sehr aufwändig
-			\item genutzt wird in der Datenbank PostgreSQL, wir werden wahrscheinlich ein Format wie HDF5 nutzen.
+			\item genutzt wird in der Datenbank PostgreSQL, wir werden wahrscheinlich ein Format wie HDF5 nutzen, falls Zeitreihen angewendet werden
 		\end{itemize}
 	\end{frame}
 
 	\begin{frame}
 		\frametitle{Beispielplot: Stromtrassen}
-		\vspace*{-1.8cm}
+		\vspace*{-1.3cm}
 		\hspace*{6cm}
 		\includegraphics[height=10cm]{./line.png}
 	\end{frame}
@@ -239,12 +239,17 @@
 		\vspace*{6mm}
 		\begin{itemize}
 			\item erste praktische Versuche mit PyPSA bzw. Lastflussberechnungen
-			\item weiter Daten suchen: Gasnetz, Bauvorhaben Wasserstoff
-			\item Aktuelle Daten liefern nur aktuelle Generatoren/Speicher
+			\item weitere Daten suchen:
+			\begin{itemize}
+				\item Gasnetz (eventuell über entsog transparency platform),
+				\item Bauvorhaben Wasserstoff
+			\end{itemize}
+			\item Kostenmodell aufstellen
+			\item Unsere Stromdaten liefern verschiedene Szenarien zur Energiewende:
 			
-			Was ist welche Technologie? Was ist mit Energiewende?
+			Vielleicht reicht das für Erzeugung schon aus? 
 			\item Wie genau funktioniert Import/Export?
-			\item Stahlindustrie betrachten
+			% \item Stahlindustrie betrachten
 		\end{itemize}
 			
 		

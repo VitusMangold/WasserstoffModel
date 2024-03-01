@@ -3,23 +3,23 @@ from requests import get
 import pandas as pd
 from shapely import wkb
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import contextily as ctx
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.csv as pc
-import numpy as np
-from ast import literal_eval
 import json
 
 mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
 
-# base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/ego_pf_hv_generator_pq_set/rows"
+base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/"
 
-# result = get("https://openenergy-platform.org/api/v0/schema/grid/tables/ego_pf_hv_generator_pq_set/rows/?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# with open(mypath + "gen_pq.json", 'w') as f:
+#     json.dump(data, f)
+# result = get(base_url + "ego_pf_hv_load/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
 
 # data = result.json()
-# with open(mypath + "gen_pq.json", 'w') as f:
+# with open(mypath + "load_pq.json", 'w') as f:
 #     json.dump(data, f)
 
 # df = pd.DataFrame(data)
@@ -59,17 +59,6 @@ mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
 # )
 # df_load_pq.to_parquet('load_pq_set.parquet', engine='pyarrow')
 # print(df_load_pq)
-
-# chunksize = 1000
-# def custom_parse(array_str):
-#     # Implement a method to parse your specific string format
-#     return np.fromstring(array_str.strip("[]"), sep=',')
-
-# with pd.read_csv(mypath + "grid__ego_pf_hv_load_pq_set/grid__ego_pf_hv_load_pq_set.csv", chunksize=chunksize) as reader:
-#     for chunk in reader:
-#         # chunk['p_set'] = chunk['p_set'].apply(custom_parse)
-#         chunk['p_set'] = chunk['p_set'].apply(json.loads)
-#         print("hallo")
 
 file_path = mypath + "grid__ego_pf_hv_load_pq_set/grid__ego_pf_hv_load_pq_set.csv"
 

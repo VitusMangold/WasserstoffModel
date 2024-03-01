@@ -19,7 +19,10 @@ print(df_bus_200kV)
 df_line_filtered = df_line.loc[(df_line["scn_name"] == "Status Quo") & (df_line["version"] == "v0.4.6")]
 df_line_filtered = df_line_filtered[df_line_filtered['bus0'].isin(bus_ids_220kV) | df_line_filtered['bus1'].isin(bus_ids_220kV)]
 print(df_line_filtered)
-# print(df_line_filtered.loc[[x in df_bus_200kV['bus_id'] for x in df_line_filtered['bus1']]])
+# aendert nix -> gute Daten
+bus_ids_220kV = set(df_line_filtered['bus0']).union(df_line_filtered['bus1'])
+print(df_bus_200kV)
+df_bus_200kV = df_bus_200kV.loc[df_bus_200kV["bus_id"].isin(bus_ids_220kV)]
 
 
 # filter bus by connection to line

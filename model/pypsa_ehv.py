@@ -1,8 +1,8 @@
 import pypsa
 import filter_ego as fe
 
-df_line = fe.df_line_filtered
-df_bus = fe.df_bus_200kV
+df_line = fe.df_line_filtered.reset_index(drop=True)
+df_bus = fe.df_bus_200kV.reset_index(drop=True)
 
 network = pypsa.Network()
 
@@ -19,18 +19,18 @@ for i, row in df_line.iterrows():
         r=row["r"],
     )
 
-network.buses
-network.lines
+print(network.buses)
+print(network.lines)
 
-network.add("Generator", "My gen", bus="My bus 0", p_set=100, control="PQ")
+# network.add("Generator", "My gen", bus="My bus 0", p_set=100, control="PQ")
 
-network.generators
-network.generators.p_set
+# network.generators
+# network.generators.p_set
 
-network.add("Load", "My load", bus="My bus 1", p_set=100)
+# network.add("Load", "My load", bus="My bus 1", p_set=100)
 
-network.loads
-network.loads.p_set
-network.loads.q_set = 100.0
-network.pf()
-network.lines_t.p0
+# network.loads
+# network.loads.p_set
+# network.loads.q_set = 100.0
+# network.pf()
+# network.lines_t.p0

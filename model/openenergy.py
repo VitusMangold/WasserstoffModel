@@ -1,9 +1,6 @@
-
+import ast
 from requests import get
 import pandas as pd
-from shapely import wkb
-import geopandas as gpd
-import contextily as ctx
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.csv as pc
@@ -13,18 +10,23 @@ mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
 
 base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/"
 
-# result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
-# with open(mypath + "gen_pq.json", 'w') as f:
-#     json.dump(data, f)
-# result = get(base_url + "ego_pf_hv_load/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+data = result.json()
+with open(mypath + "gen_pq.json", 'w') as f:
+    json.dump(data, f)
 
-# data = result.json()
-# with open(mypath + "load_pq.json", 'w') as f:
-#     json.dump(data, f)
+result = get(base_url + "ego_pf_hv_load_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+data = result.json()
+with open(mypath + "load_pq.json", 'w') as f:
+    json.dump(data, f)
 
-# df = pd.DataFrame(data)
-# print(df.describe())
-# print(df)
+# df_load = pd.read_json(mypath + "load_pq.json")
+# df_gen_pq = pd.read_json(mypath + "gen_pq.json")
+# print(df_load)
+# print(df_gen_pq)
+
+# df_load.to_hdf(mypath + "ego.h5", key='load_pq', mode='w')
+# df_gen_pq.to_hdf(mypath + "ego.h5", key='gen_pq', mode='w'); # pylint: disable=no-member
 
 # Process csv data
 
@@ -60,7 +62,7 @@ base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/"
 # df_load_pq.to_parquet('load_pq_set.parquet', engine='pyarrow')
 # print(df_load_pq)
 
-file_path = mypath + "grid__ego_pf_hv_load_pq_set/grid__ego_pf_hv_load_pq_set.csv"
+# file_path = mypath + "grid__ego_pf_hv_load_pq_set/grid__ego_pf_hv_load_pq_set.csv"
 
 # writer = None
 # with pyarrow.csv.open_csv(mypath + "grid__ego_pf_hv_load_pq_set/grid__ego_pf_hv_load_pq_set.csv", convert_options=convert_options) as reader:

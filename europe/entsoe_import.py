@@ -13,10 +13,10 @@ country_code_from = 'DE'  # Germany
 country_code_to = 'FR' # France
 
 country_code = 'DE'
-df_phys_cross = client.query_crossborder_flows(country_code_from, country_code_to, start=start, end=end, export=True, per_hour=True)
-print(df_phys_cross)
-df_phys_cross = client.query_crossborder_flows(country_code_to, country_code_from, start=start, end=end, export=True, per_hour=True)
-print(df_phys_cross)
+df_cross_to_fr = client.query_crossborder_flows(country_code_from, country_code_to, start=start, end=end, export=True, per_hour=True)
+print(df_cross_to_fr)
+df_cross_to_de = client.query_crossborder_flows(country_code_to, country_code_from, start=start, end=end, export=True, per_hour=True)
+print(df_cross_to_de)
 
 df_load = client.query_load(country_code, start=start, end=end)
 print(df_load)

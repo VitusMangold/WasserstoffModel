@@ -21,8 +21,9 @@ print(sum(load_distribution))
 print(sum(gen_distribution))
 
 network.plot(bus_sizes=1e-5 * load_distribution, ax=ax, title="Load distribution")
-plt.show()
+plt.savefig("./model/load_distribution.png")
 network.plot(bus_sizes=1e-5 * gen_distribution, ax=ax, title="Generator distribution")
+plt.savefig("./model/generator_distribution.png")
 plt.show()
 
 # gdf.set_crs(epsg=4326, inplace=True)

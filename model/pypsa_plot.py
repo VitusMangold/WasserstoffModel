@@ -24,22 +24,29 @@ network.plot(bus_sizes=1e-5 * load_distribution, ax=ax, title="Load distribution
 plt.savefig("./model/load_distribution.png")
 network.plot(bus_sizes=1e-5 * gen_distribution, ax=ax, title="Generator distribution")
 plt.savefig("./model/generator_distribution.png")
-plt.show()
+# plt.show()
 
-# gdf.set_crs(epsg=4326, inplace=True)
-# gdf = gdf.to_crs(epsg=3857)
+print(network.generators_t.p.sum(axis=1).head)
+p_gen = network.generators_t.p.sum(axis=1)
+# c = [colors[col] for col in p_by_carrier.columns]
+c = ["red", "blue"]
 
-# # Create a subplot
-# fig, ax = plt.subplots(figsize=(10, 10))
+fig, ax = plt.subplots(figsize=(12, 6))
+(p_gen / 1e3).plot(ax=ax, linewidth=4) #kind="area", color=c, alpha=0.7)
+ax.legend(ncol=4, loc="upper left")
+ax.set_ylabel("GW")
+ax.set_xlabel("")
+fig.tight_layout()
+plt.savefig("./model/gen.png")
 
-# # Plot the geometries
-# gdf.plot(ax=ax, color='red', alpha=0.4)
+p_loads = network.loads_t.p.sum(axis=1)
+# c = [colors[col] for col in p_by_carrier.columns]
+c = ["red", "blue"]
 
-# # Set the extent of the plot to the bounds of your geometries
-# minx, miny, maxx, maxy = gdf.total_bounds
-# ax.set_xlim(minx, maxx)
-# print(maxy)
-# ax.set_ylim(miny, 7.5 * 1e6) # maxy
-
-# # Add OSM basemap
-# ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+fig, ax = plt.subplots(figsize=(12, 6))
+(p_loads / 1e3).plot(ax=ax, linewidth=4) #kind="area", color=c, alpha=0.7)
+ax.legend(ncol=4, loc="upper left")
+ax.set_ylabel("GW")
+ax.set_xlabel("")
+fig.tight_layout()
+plt.savefig("./model/load.png")

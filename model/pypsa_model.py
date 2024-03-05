@@ -38,8 +38,9 @@ def get_date_range(x):
 # set reference coordinate system
 network = pypsa.Network(crs=4326)
 
-# set time points for solution
-snapshots = pd.date_range('2023-01-01', periods=1, freq='H')
+# set time points for solution.
+# CAUTION!!! Input is ignored if not relevant for snapshots
+snapshots = pd.date_range('2023-01-01', periods=365*24, freq='h')
 network.set_snapshots(snapshots)
 
 for i, row in df_bus.iterrows():

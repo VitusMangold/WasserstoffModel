@@ -1,6 +1,8 @@
 import pandas as pd
 from entsoe import EntsoePandasClient
 
+pd.set_option('display.max_columns', 10)
+
 keyFile = open('europe/.key', 'r')
 consumer_key = keyFile.readline().rstrip()
 
@@ -22,4 +24,10 @@ df_load = client.query_load(country_code, start=start, end=end)
 print(df_load)
 
 df_gen = client.query_generation(country_code, start=start, end=end)
-print(df_gen)
+print(df_gen.head)
+
+mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
+df_cross_to_de.to_json(mypath + "entsoe_cross_de.json")
+df_cross_to_fr.to_json(mypath + "entsoe_cross_fr.json")
+df_load.to_json(mypath + "entsoe_load.json")
+df_gen.to_json(mypath + "entsoe_gen.json")

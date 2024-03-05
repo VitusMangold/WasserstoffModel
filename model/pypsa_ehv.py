@@ -66,8 +66,6 @@ for i, row in df_line.iterrows():
 
 for i, row in df_gen.iterrows():
     x = df_gen_pq[df_gen_pq["generator_id"] == row["generator_id"]]["p_set"].iloc[0]
-    if i < 10:
-        print(pd.Series(x, index=get_date_range(x)))
     network.add(
         "Generator",
         "My gen {}".format(i),
@@ -129,4 +127,4 @@ for i, row in df_store.iterrows():
 network.pf()
 # print(network.lines_t.p0)
 
-# pypsa.Network.export_to_netcdf()
+network.export_to_netcdf("/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/net_01.nc")

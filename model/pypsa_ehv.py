@@ -123,8 +123,4 @@ for i, row in df_store.iterrows():
         # ...
     )
 
-# Simulate/solve powerflow
-network.pf()
-# print(network.lines_t.p0)
-
 network.export_to_netcdf("/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/net_01.nc")

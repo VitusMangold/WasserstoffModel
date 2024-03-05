@@ -1,8 +1,8 @@
 # pylint: disable=no-member
-import pypsa_ehv
+import pypsa_pf as pypsa_pf
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
-network = pypsa_ehv.network
+network = pypsa_pf.network
 
 # plot network
 fig, ax = plt.subplots(

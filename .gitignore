@@ -21,3 +21,4 @@ poetry.lock
 *.fdb_latexmk
 *.fls
 *.pyc
+europe/.key

@@ -4,7 +4,8 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import contextily as ctx
 
-mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
+keyFile = open('.path', 'r')
+mypath = keyFile.readline().rstrip()
 
 def plot_df(df):
     # Assuming 'df' is your DataFrame with the 'geom' column in WKB format

@@ -6,18 +6,29 @@ import pyarrow.parquet as pq
 import pyarrow.csv as pc
 import json
 
-mypath = "/Users/johannes/Nextcloud/Documents/Uni/FSS_2024/Seminar_Wasserstoff/"
+keyFile = open('.path', 'r')
+mypath = keyFile.readline().rstrip()
 
 base_url = "https://openenergy-platform.org/api/v0/schema/grid/tables/"
 
-result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# data = result.json()
+# with open(mypath + "gen_pq_Status_Quo.json", 'w') as f:
+#     json.dump(data, f)
+
+# result = get(base_url + "ego_pf_hv_load_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+# data = result.json()
+# with open(mypath + "load_pq_Status_Quo.json", 'w') as f:
+#     json.dump(data, f)
+
+result = get(base_url + "ego_pf_hv_generator_pq_set/rows?where=version=v0.4.6&where=scn_name=NEP%202035")
 data = result.json()
-with open(mypath + "gen_pq.json", 'w') as f:
+with open(mypath + "gen_pq_2035.json", 'w') as f:
     json.dump(data, f)
 
-result = get(base_url + "ego_pf_hv_load_pq_set/rows?where=version=v0.4.6&where=scn_name=Status%20Quo")
+result = get(base_url + "ego_pf_hv_load_pq_set/rows?where=version=v0.4.6&where=scn_name=NEP%202035")
 data = result.json()
-with open(mypath + "load_pq.json", 'w') as f:
+with open(mypath + "load_pq_2035.json", 'w') as f:
     json.dump(data, f)
 
 # df_load = pd.read_json(mypath + "load_pq.json")

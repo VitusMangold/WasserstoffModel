@@ -29,7 +29,7 @@ print(df_load_fr)
 df_gen_fr = client.query_generation(country_code_to, start=start, end=end)
 print(df_gen_fr.head)
 
-keyFile = open('.key', 'r')
+keyFile = open('.path', 'r')
 mypath = keyFile.readline().rstrip()
 df_cross_to_de.to_json(mypath + "entsoe_cross_de.json")
 df_cross_to_fr.to_json(mypath + "entsoe_cross_fr.json")

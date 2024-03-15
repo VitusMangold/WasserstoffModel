@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 time_horizon = 20 # in years
 line_length = 2000 # in km
 power_building_costs = ... # in kW
-h2_building_costs = (165000e6 / (24 * 365) / 1200) * line_length * 7.5e6 # in kW,
+h2_building_costs = ((1.0 / (165000e6)) / 1200) * line_length * 7.5e6 # in kW/km,
 # extrapolate GWh Nordstream 2 to Spain times costs
 to_h2_factor = 0.25 * 0.6 # power to hydrogen
 transport_loss_power = 0.05 # per 1000 km
@@ -21,6 +21,10 @@ def conventional_costs(missing_power):
 def renewable_costs(generation):
     """ Power costs of renewables. """
     return generation.sum() * power_price_renewable
+
+def power_line_costs(capacity_power):
+    """ Building costs for power line of given capacity. """
+    return power_line_costs * capacity_power
 
 def h2_line_costs(capacity_h2):
     """ Building costs for hydrogen line of given capacity. """
@@ -51,15 +55,16 @@ def costs(capacity_power, capacity_h2, share_renewable):
         """ indikator function for one country with positive and one with negative bilance """
         return 1.0 if x * y < 0 else 0.0
     # then send till one of them has net zero or capacity is fully utilized
-    pointwise_cross_flow = np.vectorize(lambda x, y: indikator(x, y) * min(capacity_power + capacity_h2, abs(x), abs(y)))
+    pointwise_cross_flow = np.vectorize(lambda x, y: indikator(x, y) * min(capacity_power + to_h2_factor * capacity_h2, abs(x), abs(y)))
     crossborder_flow = pointwise_cross_flow(de_net, other_net) * (other_net > 0.0)
     flow_with_direction = crossborder_flow.mask(de_net < 0, -crossborder_flow)
     missing_power_de = de_net + flow_with_direction
     missing_power_other = other_net - flow_with_direction
     c_costs = conventional_costs(missing_power_de + missing_power_other)
     r_costs = renewable_costs(hypothetical_de + hypothetical_other)
-    power_l_costs = h2_line_costs(capacity_power)
+    power_l_costs = power_line_costs(capacity_power)
     h2_l_costs = h2_line_costs(capacity_h2)
     return c_costs + power_l_costs + h2_l_costs + r_costs
 
-print(costs(1e6, 1e6, 0.9))
+# print(costs(1e6, 1e6, 0.9))
+print(h2_building_costs)

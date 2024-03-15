@@ -1,61 +1,65 @@
-""" here we should specify the concrete model """
+""" Simple two country model (DE/other) """
 import entsoe_preprocess as ep
 import numpy as np
 from scipy.optimize import minimize
 
-# compute difference pro country
-
 time_horizon = 20 # in years
-line_length = ... # 
-power_fixed_costs = ... #
-h2_fixed_costs = ... #
-power_variable_costs = ... # per capacity, length
-h2_variable_costs = ... # per capacity, length
-to_hydrogen_factor = 0.75 # power to hydrogen, \eta_{2,1}
-# overproduction_costs_DE = ...
-# underproduction_costs_DE = ...
-# overproduction_costs_FR = ...
-# underproduction_costs_FR = ...
-power_price = ... # in kWh
+line_length = 2000 # in km
+power_building_costs = ... # in kW
+h2_building_costs = (165000e6 / (24 * 365) / 1200) * line_length * 7.5e6 # in kW,
+# extrapolate GWh Nordstream 2 to Spain times costs
+to_h2_factor = 0.25 * 0.6 # power to hydrogen
+transport_loss_power = 0.05 # per 1000 km
+transport_loss_h2 = 0.0 # per 1000 km
+power_price_conventional = 0.2000 # in Euro/kWh
+power_price_renewable = 0.08 # in Euro/kWh
 
-# advanced stuff
-storage_costs = ... # in Euro/kWh / h
+def conventional_costs(missing_power):
+    """ Models the costs arising from having to fill net energy gap by conventional power generation. """
+    return missing_power.sum() * power_price_conventional
 
-def costs_power_line(capacity):
-    """ Maintenance costs for power line per year. """
-    return (1.0 if (capacity > 0) else 0.0) * power_fixed_costs + capacity * power_variable_costs
+def renewable_costs(generation):
+    """ Power costs of renewables. """
+    return generation.sum() * power_price_renewable
 
+def h2_line_costs(capacity_h2):
+    """ Building costs for hydrogen line of given capacity. """
+    return h2_building_costs * capacity_h2
 
-def costs_h2_line(capacity):
-    """ Maintenance costs for hydrogen line per year. """
-    return (1.0 if (capacity > 0) else 0.0) * h2_fixed_costs + capacity * h2_variable_costs
-
-def building_costs_power_line(capacity):
-    """ Building costs for power line. """
-    return capacity
-
-def building_costs_h2_line(capacity):
-    """ Building costs for hydrogen line. """
-    return capacity
-
-def current_net_power_costs(leftover_power):
-    """ Cost function for generation/load imbalance between countries """
-    # if country == "DE":
-    #     factor = overproduction_costs_DE if (net_power >= 0) else underproduction_costs_DE
-    # if country == "FR":
-    #     factor = overproduction_costs_FR if (net_power >= 0) else underproduction_costs_FR
-    # return net_power * factor
-    return leftover_power * power_price
-
-def total_net_power_costs(capacity_power, capacity_h2):
-    """ Cost function for generation/load imbalances in the countries cumulated over time """
-    pointwise_costs = np.vectorize(lambda x, y: max(abs(x - y) - (capacity_power + capacity_h2), 0.0))
-    zip_net_power = np.array(list(zip(ep.de_net, ep.fr_net)))
-    return pointwise_costs(zip_net_power) * time_horizon
-
-def costs(capacity_power, capacity_h2):
+def costs(capacity_power, capacity_h2, share_renewable):
     """ This is our objective function (total costs). """
-    building_costs = building_costs_power_line(capacity_power) + building_costs_h2_line(capacity_h2)
-    maintenance_costs = costs_power_line(capacity_power) + costs_h2_line(capacity_h2)
-    net_power_costs = total_net_power_costs(capacity_power, capacity_h2)
-    return building_costs + maintenance_costs + net_power_costs
+    renewable_de = ep.df_gen_de[ep.renewable].sum(axis=1)
+    # We scale up our renewables by the current total generation scaled by share_renewable
+    hypothetical_de = renewable_de * (ep.df_gen_de.sum().sum() / renewable_de.sum()) * share_renewable
+
+    renewable_other = ep.df_gen_other[ep.renewable].sum(axis=1)
+    # We scale up our renewables by the current total generation scaled by share_renewable
+    hypothetical_other = renewable_other * (ep.df_gen_other.sum().sum() / renewable_other.sum()) * share_renewable
+
+    # there is a missing entry somehow -> average out
+    renewable_de = renewable_de.resample('15min').mean()
+    renewable_other = renewable_other.resample('15min').mean()
+    hypothetical_de = hypothetical_de.resample('15min').mean()
+    hypothetical_other = hypothetical_other.resample('15min').mean()
+
+    de_net = hypothetical_de - ep.df_load_de["Actual Load"]
+    other_net = hypothetical_other - ep.df_load_other["Actual Load"]#
+    print(de_net)
+    print(other_net)
+    # TODO: this implicitly uses lines which go in either direction, refine!
+    def indikator(x, y):
+        """ indikator function for one country with positive and one with negative bilance """
+        return 1.0 if x * y < 0 else 0.0
+    # then send till one of them has net zero or capacity is fully utilized
+    pointwise_cross_flow = np.vectorize(lambda x, y: indikator(x, y) * min(capacity_power + capacity_h2, abs(x), abs(y)))
+    crossborder_flow = pointwise_cross_flow(de_net, other_net) * (other_net > 0.0)
+    flow_with_direction = crossborder_flow.mask(de_net < 0, -crossborder_flow)
+    missing_power_de = de_net + flow_with_direction
+    missing_power_other = other_net - flow_with_direction
+    c_costs = conventional_costs(missing_power_de + missing_power_other)
+    r_costs = renewable_costs(hypothetical_de + hypothetical_other)
+    power_l_costs = h2_line_costs(capacity_power)
+    h2_l_costs = h2_line_costs(capacity_h2)
+    return c_costs + power_l_costs + h2_l_costs + r_costs
+
+print(costs(1e6, 1e6, 0.9))

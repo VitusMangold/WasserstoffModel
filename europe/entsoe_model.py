@@ -16,15 +16,15 @@ renewable_other = renewable_other.resample('15min').mean()
 
 time_horizon = 20 # in years
 line_length = 2000 # in km
-power_building_costs = 700.0 # in €/kW
+power_building_costs = 5000.0 # in €/kW
 h2_building_costs = (1.0 / (165000e6 / (365 * 24))) * (line_length / 1200) * 7.5e9 # in €/kW
 # extrapolate GW Nordstream 2 to Spain times costs
 # 165000 GWh und wir betrachten ein Jahr; 7.5 Mrd Euro Baukosten
 to_h2_factor = 0.25 * 0.6 # power to hydrogen
 transport_loss_power = 0.05 # per 1000 km
 transport_loss_h2 = 0.0 # per 1000 km
-power_price_conventional = 0.2000 # in Euro/kWh
-# power_price_conventional = 8.0 # in Euro/kWh
+power_price_conventional = 0.3000 # in Euro/kWh
+# power_price_conventional = 1.0000 # in Euro/kWh
 power_price_renewable = 0.08 # in Euro/kWh
 
 def conventional_costs(missing_power):
@@ -52,7 +52,10 @@ def positive_negative(x, y):
 
 def possible_out(high, capacity_power, capacity_h2):
     """ Possible outflow for a country with positive bilance. """
-    return high * (transport_loss_power * capacity_power + to_h2_factor * capacity_h2)
+    return high * (
+        (1.0 - transport_loss_power)**(line_length/1000.0) * capacity_power +
+        (1.0 - transport_loss_h2)**(line_length/1000.0) * to_h2_factor * capacity_h2
+    )
 
 def real_in(x, y, capacity_power, capacity_h2):
     """ Realisation of inflow considering limited capacity """
@@ -102,18 +105,13 @@ def costs(capacity_power, capacity_h2, share_renewable):
     c_costs = conventional_costs(missing_power_de + missing_power_other)
     # print(c_costs)
     # print(np.count_nonzero(np.isnan(missing_power_de + missing_power_other)))
+    # FIXME: are we in correct unit??
     r_costs = renewable_costs(hypothetical_de + hypothetical_other)
     power_l_costs = power_line_costs(capacity_power)
     h2_l_costs = h2_line_costs(capacity_h2)
     # power_l_costs = 0.0
     # h2_l_costs = 0.0
     return c_costs + power_l_costs + h2_l_costs + r_costs
-
-# print(h2_building_costs)
-# print(costs(1e5, 1e5, 0.9))
-# print(costs(0, 0, 0.9))
-# print(costs(100, 100, 0.9))
-# print(costs(0, 100, 0.9))
 
 # Initial guess
 x0 = np.array([1.0, 1.0])

@@ -16,8 +16,6 @@ df_gen_other = pd.read_json(mypath + "entsoe_gen_other.json")
 df_gen_other = df_gen_other.tz_localize('UTC').tz_convert('Europe/Brussels')
 
 pd.set_option('display.max_columns', 10)
-# plt.plot(df_load_other.loc['2023-01-01':'2023-01-07'])
-# plt.plot((df_gen-df_load).loc['2023-01-01':'2023-01-07'])
 
 # Aggregated or Consumption? Nuclear? Waste?
 renewable = [
@@ -39,29 +37,31 @@ hypothetical_de = renewable_de * (df_gen_de.sum().sum() / renewable_de.sum())
 renewable_other = df_gen_other[renewable].sum(axis=1)
 hypothetical_other = renewable_other * (df_gen_other.sum().sum() / renewable_other.sum())
 
-plt.plot(df_load_de.loc['2023-01-01':'2023-08-07'], label="Load")
-plt.plot(renewable_de.loc['2023-01-01':'2023-08-07'], label="Renewable")
-plt.plot(hypothetical_de.loc['2023-01-01':'2023-08-07'], label="Rescaled renewable")
-plt.plot(df_gen_de.sum(axis=1).loc['2023-01-01':'2023-08-07'], label="Total Generation")
+end_time = '2023-08-07'
+
+plt.plot(df_load_de.loc['2023-01-01':end_time], label="Load")
+plt.plot(renewable_de.loc['2023-01-01':end_time], label="Renewable")
+plt.plot(hypothetical_de.loc['2023-01-01':end_time], label="Rescaled renewable")
+plt.plot(df_gen_de.sum(axis=1).loc['2023-01-01':end_time], label="Total Generation")
 plt.legend()
 plt.title("DE in MW")
-# plt.show()
+plt.show()
 
-plt.plot(df_load_other.loc['2023-01-01':'2023-01-07'], label="Load")
-plt.plot(renewable_other.loc['2023-01-01':'2023-01-07'], label="Renewable")
-plt.plot(hypothetical_other.loc['2023-01-01':'2023-01-07'], label="Rescaled renewable")
-plt.plot(df_gen_other.sum(axis=1).loc['2023-01-01':'2023-01-07'], label="Total Generation")
+plt.plot(df_load_other.loc['2023-01-01':end_time], label="Load")
+plt.plot(renewable_other.loc['2023-01-01':end_time], label="Renewable")
+plt.plot(hypothetical_other.loc['2023-01-01':end_time], label="Rescaled renewable")
+plt.plot(df_gen_other.sum(axis=1).loc['2023-01-01':end_time], label="Total Generation")
 plt.legend()
 plt.title("Other in MW")
-# plt.show()
+plt.show()
 
 de_net = hypothetical_de - df_load_de["Actual Load"]
 other_net = hypothetical_other - df_load_other["Actual Load"]
-plt.plot(de_net.loc['2023-01-01':'2023-08-07'], label="DE: Net energy")
-plt.plot(other_net.loc['2023-01-01':'2023-08-07'], label="Other country: Net energy")
+plt.plot(de_net.loc['2023-01-01':end_time], label="DE: Net energy")
+plt.plot(other_net.loc['2023-01-01':end_time], label="Other country: Net energy")
 plt.axhline(0, color="black")
 plt.legend()
 plt.title("Comparison in MW")
-# plt.show()
+plt.show()
 plt.clf()
 plt.close()

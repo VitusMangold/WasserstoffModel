@@ -48,7 +48,7 @@ plt.plot(hypothetical_de.loc['2023-01-01':'2023-01-07'], label="Rescaled renewab
 plt.plot(df_gen_de.sum(axis=1).loc['2023-01-01':'2023-01-07'], label="Total Generation")
 plt.legend()
 plt.title("DE")
-# plt.show()
+plt.show()
 
 plt.plot(df_load_other.loc['2023-01-01':'2023-01-07'], label="Load")
 plt.plot(renewable_other.loc['2023-01-01':'2023-01-07'], label="Renewable")
@@ -56,7 +56,7 @@ plt.plot(hypothetical_other.loc['2023-01-01':'2023-01-07'], label="Rescaled rene
 plt.plot(df_gen_other.sum(axis=1).loc['2023-01-01':'2023-01-07'], label="Total Generation")
 plt.legend()
 plt.title("Other")
-# plt.show()
+plt.show()
 
 print(hypothetical_de)
 print(df_load_de)
@@ -65,8 +65,9 @@ de_net = hypothetical_de - df_load_de["Actual Load"]
 other_net = hypothetical_other - df_load_other["Actual Load"]
 plt.plot(de_net.loc['2023-01-01':'2023-01-07'], label="DE: Net energy")
 plt.plot(other_net.loc['2023-01-01':'2023-01-07'], label="Other country: Net energy")
+plt.axhline(0, color="black")
 plt.legend()
-# plt.show()
+plt.show()
 
 de_net = de_net.resample('1h').mean()
 other_net = other_net.resample('1h').mean()

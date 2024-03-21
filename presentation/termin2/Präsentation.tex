@@ -71,11 +71,11 @@
 	%---------------------------------
 	\begin{frame}
 		\frametitle{Letzte Präsentation}
-		\vspace*{2mm}
+		\vspace*{-4mm}
 		\begin{minipage}{1\linewidth}
 			\begin{minipage}{.5\linewidth}
 				
-			
+			Graphentheorie:
 				
 		\begin{itemize}
 			\item erste Modellierung des Stromnetzes
@@ -87,24 +87,27 @@
 			\end{itemize}
 			\vspace*{2mm}
 			
-			\begin{itemize}
-				\item [$\rightarrow$]
+			
 			\end{itemize}
 		\vspace*{2mm}
 		
-		\item Datensuche 
-		\vspace*{2mm}
-		
+		Modellierung:
 		\begin{itemize}
-			\item [$\rightarrow$]
-		\end{itemize}
-				 
+			\vspace*{2mm}
+		\item Stromtrassennetz von Deutschland
+		\vspace*{2mm}
+		\item Herleitung der Powerflow Equations
+		
 		\end{itemize}
 	\end{minipage}
 \hfill
 \begin{minipage}{.6\linewidth}
+	
 \centering
-\includegraphics[width=.7\linewidth]{old_graph.png}
+
+\includegraphics[width=.8\linewidth]{line.png}
+
+
 
 \end{minipage}
 \end{minipage}	
@@ -120,11 +123,11 @@
 		\vspace*{2mm}
 		\begin{minipage}{1\linewidth}
 			\begin{minipage}{.4\linewidth}
-				\vspace*{-12mm}
+				\vspace*{-8mm}
 				Max-Flow-Min-Cut:
 				\begin{itemize}
 					
-					\item Auswertung mit Zeitreihe
+					\item Auswertung mit Zeitreihen
 						\vspace*{2mm}
 					
 					\item Drei Produktions- und drei Verbraucherknoten
@@ -133,14 +136,14 @@
 					\item um Max-Flow-Min-Cut anwenden zu können:
 						\vspace*{2mm}
 						\begin{itemize}
-							\item jeweils einem gebündelten Knoten
+							\item [$\rightarrow$] jeweils einem gebündelten Knoten für In- und Output
+							 
 						\end{itemize}
 					
 					
-						\vspace*{2mm}
-					
-					\item 
-					
+					\vspace*{2mm}
+					\item Problem: Einbezug von Verlust aktuell nicht möglich
+									
 					
 				\end{itemize}
 		
@@ -156,6 +159,44 @@
 		
 		
 	\end{frame}
+		%---------------------------------
+	\begin{frame}
+		\frametitle{}
+		\vspace*{8mm}
+		\begin{minipage}{1\linewidth}
+		
+			\begin{minipage}{.5\linewidth}
+				\centering
+				\includegraphics[width=1\linewidth]{Figure_1.png}
+				
+			\end{minipage}
+			\hfill
+			\begin{minipage}{.5\linewidth}
+				\centering
+				\includegraphics[width=1\linewidth]{Figure_2.png}
+				
+			\end{minipage}
+		\end{minipage}	
+		
+		
+		
+	\end{frame}
+
+		%---------------------------------
+\begin{frame}
+	\frametitle{}
+	\vspace*{4mm}
+	\begin{minipage}{0.9\linewidth}
+		
+		
+			\centering
+			\includegraphics[width=0.6\linewidth]{Figure_3.png}
+			
+	\end{minipage}	
+	
+	
+	
+\end{frame}
 	
 	%---------------------------------
 	
@@ -168,14 +209,28 @@
 					
 					\item Betrachten von zwei Länder (Deutschland, Spanien)
 					
+					\item Daten: entsoe - Transperency Platform
+					
 					\item Länder haben Stromproduktion und -verbrauch
 					
 					\item bei Überproduktion Austausch von Strom möglich 
 					
-					\item Bilder...
+					\item Pipeline-Länge 2000km
 					
+					\item Baukosten Stromtrasse: 42 Mrd EUR (Anhand Beispiel SuedLink)
 					
-					\item
+					\item 5\% Verlust pro 1000km (800 kV)
+					
+					\item Baukosten H2-Pipeline: 12,5 Mrd EUR (Anhand Beispiel Nord Stream)
+					
+					\item Verlust Umwandlung H2: 0.25 $\cdot$ 0.6
+					
+					\item Stromkosten Erneuerbar: $ 0.08 \frac{EUR}{kWh}$
+					
+					\item Stromkosten Konventionell: $ 0.8 \frac{EUR}{kWh}$
+					
+					\item Zeithorizont: 20 Jahre
+					
 				\end{itemize}
 							
 		
@@ -198,29 +253,38 @@
 		
 	\end{frame}
 
+
+	%---------------------------------
+	
+	
 	\begin{frame}
 		\frametitle{Inputdaten I}
 		\vspace{-2mm}
-		\includegraphics[width=0.7\linewidth]{de.pdf}
+		\begin{figure}
+			\includegraphics[width=0.6\linewidth]{de.pdf}
+			\caption{Daten für Deutschland in MW, Skalierung von 100\%}
+		\end{figure}
 		
 	\end{frame}
-
+	
 	\begin{frame}
 		\frametitle{Inputdaten II}
 		\vspace{-2mm}
-		\includegraphics[width=0.7\linewidth]{comparison.pdf}
-		
+		\begin{figure}
+			\includegraphics[width=0.6\linewidth]{comparison.pdf}
+			\caption{Nettoenergie in Deutschland und Spanien, Skalierung von 100\%}
+		\end{figure}
 	\end{frame}
-
+	
 	%---------------------------------
 	\begin{frame}
 		\frametitle{Kostenfunktion}
-		\vspace*{0mm}
+		\vspace*{2mm}
 			\begin{minipage}{1\linewidth}
 			\begin{minipage}{1\linewidth}
 				\begin{itemize}
 					\item \begin{math}
-						J(f_D, f_S, c) = (d_D + d_S) \cdot P_{Kohle} + P_{Leitung} \cdot c_{Strom} + P_{Erneuerbar}(f_D, f_S) + c_H \cdot P_H
+						J(f_D, f_S, c_{Strom}, c_{H2}) = (d_D + d_S) \cdot P_{Kohle} + P_{Leitung} \cdot c_{Strom} + P_{Erneuerbar}(f_D, f_S) + c_{H2} \cdot P_{H2}
 					\end{math}
 					\item 
 					$	f_D$ = Skalierung der Produktion von Deutschland
@@ -231,14 +295,7 @@
 					$	c$ = Kapazität
 					\item 
 					$	d$ = Differenz von Stromproduktion und  Stromverbrauch
-					\item 
-						$c_{Strom}$ (Kapazität Strom) = 
-					\item \begin{math}
-						c_H = -[ (\int diff) \cdot 0.6] \cdot P_{Kohle} \text{ (Kapazität Wasserstoff)}
-					\end{math}
-					\item \begin{math} 
-						P_{Erneuerbar} = 8.4 {ct}/{kWh} \cdot \int Leistung
-					\end{math}
+				
 					
 				\end{itemize}
 			\end{minipage}
@@ -253,84 +310,57 @@
 			
 	\end{frame}
 
-	%---------------------------------
-		\begin{frame}
-		\frametitle{Annahmen}
-		\begin{itemize}
-			\item
-			\item Stromproduktionskosten sind fix (für Erneuerbare und Fossile Energie Produktion)
-			\item Nutzung der Stromtrasse ist kostenfrei (Nur Baukosten)
-			\item
-			\item 
-			
-		\end{itemize}
-	\end{frame}
-	%---------------------------------
+%---------------------------------
 
-	\begin{frame}
-		\frametitle{Erste Ergebnisse I}
-		\begin{itemize}
-			\item 
-			\item Grafik für fixierte $f_D, f_S = 1.0$ auf folgender Seite
-		\end{itemize}
-		\vspace*{-2cm}
-	\end{frame}
+\begin{frame}
+	\frametitle{Erste Ergebnisse I}
+	\begin{itemize}
+		\item Optimierung für alle vier Parameter gibt $f_D, f_S \geq 100\%$
+		\item Kapazitäten sind in Summe bei über $3000$ MW
+		\item Grafik für fixierte $f_D, f_S = 1.0$ auf folgender Seite
+	\end{itemize}
+	\vspace*{-2cm}
+\end{frame}
 
-	\begin{frame}
-		\frametitle{Erste Ergebnisse II}
-		\vspace*{-1.6cm}
-		% \hspace*{5cm}
-		\begin{figure}
-			\hspace*{3.5cm}\includegraphics[trim={3.4cm 1.0cm 3.4cm 1.0cm},clip, width=0.75\linewidth]{optimization.pdf}
-			% \caption{Kostenfunktion für fixierte Skalierung der Renewables}
-		\end{figure}x
-	\end{frame}
+\begin{frame}
+	\frametitle{Erste Ergebnisse II}
+	\vspace*{-1.6cm}
+	% \hspace*{5cm}
+	\begin{figure}
+		\hspace*{3.5cm}\includegraphics[trim={3.4cm 1.0cm 3.4cm 1.0cm},clip, width=0.75\linewidth]{optimization.pdf}
+		% \caption{Kostenfunktion für fixierte Skalierung der Renewables}
+	\end{figure}x
+\end{frame}
+
+
+
+	%---------------------------------
 	
 	\begin{frame}
 		\frametitle{Ausblick}
-		\begin{itemize}
+		Graphentheorie:
+		\begin{itemize} 
+			\item Automatisierung des Hinzufügen von Start- und Endknoten bei beliebigem Graph
+			\item Verlust in Graphen einbinden
+			\item Einbindung einer Zeitreihe für Verbrauch
 			\item Graphentheoretischen Ansatz auf Modell anwenden
-			\item
-			\item TO do: Plotten für graphen (in und output) zwei kanten Kapazität über die Zeitreihe, wie viel läuft drüber 
-			\item scipy.optimzie.minimize
-			\item $x_0$ beide c´s auf null setzen, f1 = 1 = aktueller Zustand oder f1 = 3
 			
 		\end{itemize}
-	\end{frame}
-	
-	
-
-
-	%---------------------------------
-	
-	
-
-	
-	
-	\begin{frame}
-		\frametitle{Ausblick}
-		
-		\vspace*{6mm}
+		Modellierung:
 		\begin{itemize}
-			\item erste praktische Versuche mit PyPSA bzw. Lastflussberechnungen
-			\item weitere Daten suchen:
-			\begin{itemize}
-				\item Gasnetz (eventuell über entsog transparency platform),
-				\item Bauvorhaben Wasserstoff
-			\end{itemize}
-			\item Kostenmodell aufstellen
-			\item Unsere Stromdaten liefern verschiedene Szenarien zur Energiewende:
-			
-			Vielleicht reicht das für Erzeugung schon aus? 
-			\item Wie genau funktioniert Import/Export?
-			% \item Stahlindustrie betrachten
+			\item Erweiterung durch Hinzufügen von Ländern
+			\item Erweiterung durch Speicherung von Wasserstoff
+			\item Wird Verlust von Umwandlung von Strom-Wasserstoff-Strom sich verbessern?
+			\item Eventuell Lastflussberechnung für Fantasie-Stromtrassen
 		\end{itemize}
-			
-		
 	\end{frame}
 	
 	
+
+
 	%---------------------------------
+	
+	
 	
 	
 	

@@ -1,0 +1,17 @@
+CREATE SCHEMA grid;
+CREATE SCHEMA boundaries;
+CREATE EXTENSION postgis;
+
+pg_restore --host localhost --port 5432 --username johannes --no-password --dbname mydb --no-owner --no-privileges --verbose "etrago_data_egon2035.backup"
+
+poetry add psycopg2-binary
+
+poetry add git+https://github.com/coroa/saio.git
+
+\dn: Lists all schemas in the database.
+\dt *.*: Lists all tables in all schemas.
+\dv: Lists all views.
+\df: Lists all functions.
+\l: Lists all databases.
+\du: Lists all roles/users.
+\d table_name: Describes a table structure (replace table_name with the actual name of the table).

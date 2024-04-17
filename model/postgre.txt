@@ -15,3 +15,80 @@ poetry add git+https://github.com/coroa/saio.git
 \l: Lists all databases.
 \du: Lists all roles/users.
 \d table_name: Describes a table structure (replace table_name with the actual name of the table).
+
+fetch first 10 rows only
+select * from grid.egon_etrago_bus ORDER BY carrier DESC
+
+\d grid.egon_etrago_load_timeseries
+SELECT q_set FROM grid.egon_etrago_load_timeseries LIMIT 5;
+SELECT p_set FROM grid.egon_etrago_generator_timeseries LIMIT 5;
+
+SELECT p_set 
+FROM grid.egon_etrago_generator_timeseries 
+WHERE cardinality(p_set) > 0 
+LIMIT 5;
+
+SELECT p_set 
+FROM grid.egon_etrago_load_timeseries 
+WHERE cardinality(p_set) > 0 
+LIMIT 5;
+
+SELECT p_set
+FROM grid.egon_etrago_link_timeseries 
+WHERE cardinality(p_set) > 0 
+LIMIT 5;
+
+SELECT s_max_pu
+FROM grid.egon_etrago_line_timeseries 
+WHERE cardinality(s_max_pu) > 0 
+LIMIT 5;
+
+SELECT s_max_pu FROM grid.egon_etrago_line_timeseries LIMIT 5;
+
+SELECT v_mag_pu_set
+FROM grid.egon_etrago_bus_timeseries
+WHERE cardinality(v_mag_pu_set) > 0 
+LIMIT 5;
+
+# Array-Längen
+
+SELECT DISTINCT array_length(s_max_pu, 1) AS array_length
+FROM grid.egon_etrago_line_timeseries
+WHERE s_max_pu IS NOT NULL
+ORDER BY array_length;
+
+SELECT DISTINCT array_length(p_set, 1) AS array_length
+FROM grid.egon_etrago_load_timeseries
+WHERE p_set IS NOT NULL
+ORDER BY array_length;
+
+SELECT DISTINCT array_length(q_set, 1) AS array_length
+FROM grid.egon_etrago_generator_timeseries
+WHERE q_set IS NOT NULL
+ORDER BY array_length;
+
+SELECT DISTINCT array_length(p_set, 1) AS array_length
+FROM grid.egon_etrago_generator_timeseries
+WHERE p_set IS NOT NULL
+ORDER BY array_length;
+
+SELECT DISTINCT array_length(p_set, 1) AS array_length
+FROM grid.egon_etrago_generator_timeseries
+WHERE p_set IS NOT NULL
+ORDER BY array_length;
+
+SELECT s_max_pu[1], s_max_pu[2], array_length(s_max_pu, 1) FROM grid.egon_etrago_line_timeseries LIMIT 1;
+SELECT p_set[1], p_set[2], array_length(p_set, 1) FROM grid.egon_etrago_generator_timeseries LIMIT 1;
+SELECT q_set[1], q_set[2], array_length(q_set, 1) FROM grid.egon_etrago_generator_timeseries LIMIT 1;
+SELECT p_set[1], p_set[2], array_length(p_set, 1) FROM grid.egon_etrago_load_timeseries LIMIT 1;
+SELECT q_set[1], q_set[2], array_length(q_set, 1) FROM grid.egon_etrago_load_timeseries LIMIT 1;
+
+SELECT p_max_pu
+FROM grid.egon_etrago_generator_timeseries
+WHERE cardinality(p_max_pu) > 0 
+LIMIT 5;
+
+SELECT DISTINCT array_length(p_max_pu, 1) AS array_length
+FROM grid.egon_etrago_generator_timeseries
+WHERE p_max_pu IS NOT NULL
+ORDER BY array_length;

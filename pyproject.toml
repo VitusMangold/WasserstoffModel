@@ -18,6 +18,7 @@ pyarrow = "^15.0.0"
 pypsa = "^0.27.0"
 cartopy = "^0.22.0"
 entsoe-py = "^0.6.7"
+sqlalchemy = "^2.0.28"
 
 
 [build-system]

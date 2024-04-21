@@ -86,7 +86,7 @@ plt.savefig("./presentation/termin2/optimization.pdf")
 x0 = np.array([3e6, 5e6, 0.9, 0.9])
 
 # Bounds for each variable
-bounds = [(0, None), (0, None), (0, 2), (0, 2)]  # (min, max) for x and y
+bounds = [(0, None), (0, None), (0, 5), (0, 5)]  # (min, max) for x and y
 
 # Perform the optimization
 result = minimize(lambda x: em.costs(x[0], x[1], x[2], x[3]), x0, method='Nelder-Mead', bounds=bounds)

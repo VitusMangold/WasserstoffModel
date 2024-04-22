@@ -41,8 +41,8 @@ print("Minimum value:", opt_z)
 
 # Adjust the range of the grid to better encompass the optimized parameters
 n_grid_points = 40
-x_max = max(5e6, opt_x * 1.2)
-y_max = max(5e6, opt_y * 1.2)
+x_max = max(5e6, opt_x * 1.5)
+y_max = max(5e6, opt_y * 1.5)
 x_grid = np.linspace(0.0, x_max, n_grid_points)
 y_grid = np.linspace(0.0, y_max, n_grid_points)
 x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
@@ -76,9 +76,11 @@ ax.set_ylabel("Hydrogen line capacity in kW")
 ax.set_zlabel("Total costs in Euro")
 
 # Show plot
-# plt.show()
+plt.show()
 fig.tight_layout()
 plt.savefig("./presentation/termin2/optimization.pdf")
+# Diese Kostenfunktion ist für Stromkapazität nahe Null sehr hoch,
+# weil man für fixierte erneuerbare Energien nicht genug Strom transportieren kann.
 
 ## Minimize all four dimensions
 

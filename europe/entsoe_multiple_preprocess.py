@@ -63,35 +63,35 @@ renewable = [
 def filter_for_renewables(df):
     found_renewables = [colname for colname in df.columns.values if colname in renewable]
     return df[found_renewables].sum(axis=1)
-print({key: gens[key].columns.values for key in gens})
+# print({key: gens[key].columns.values for key in gens})
 all_columns = set()
 for df in gens.values():
     all_columns.update(df.columns)
-print(all_columns)
+# print(all_columns)
 
 renewables = {key: filter_for_renewables(gen) for key, gen in gens.items()}
 hypothetical = {key: renewables[key] * (gens[key].sum().sum() / renewables[key].sum()) for key in gens}
 
-# end_time = '2023-01-07'
-end_time = '2023-01-31'
+end_time = '2023-01-07'
+# end_time = '2023-01-31'
 for (country, item) in loads.items():
     plt.plot(item.loc['2023-01-01':end_time], label=country)
 plt.legend()
 plt.title("Energy Consumption")
-plt.show()
+# plt.show()
 
 for (country, item) in renewables.items():
     plt.plot(item.loc['2023-01-01':end_time], label=country)
 plt.legend()
 plt.title("Renewable Energy Generation")
-plt.show()
+# plt.show()
 
 for (country, item) in hypothetical.items():
     plt.plot(item.loc['2023-01-01':end_time], label=country)
 plt.legend()
 plt.title("Hypothetical 100% Renewable Energy Generation")
-plt.show()
+# plt.show()
 
-plt.plot(gens["CH"].loc['2023-01-01':end_time], label="CH")
-plt.show()
-print(gens["CH"].sum(axis="rows"))
+gens["CH"].loc['2023-01-01':end_time].plot(kind='line', label="CH")
+# plt.show()
+# print(gens["CH"].sum(axis="rows"))

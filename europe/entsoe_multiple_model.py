@@ -42,8 +42,12 @@ def power_imbalance_costs(net_dict):
         return -total.loc[total >= 0].sum()
     def neg_reward(total):
         return -total.loc[total < 0].sum()
+    # Input is time series per country
     def net_costs(value):
-        return max(pos_reward(value) * constants.power_price_conventional + neg_reward(value), 0.0) * constants.time_horizon
+        return max(
+                pos_reward(value) * constants.power_price_overproduction + neg_reward(value) * constants.power_price_conventional,
+                0.0
+            ) * constants.time_horizon
     return sum(net_costs(value) for value in net_dict.values())
 
 loads = {key: value.resample('1h').mean() for key, value in emp.loads.items()}
@@ -83,11 +87,11 @@ def costs(capacities, share_renewables):
         gen_unscaled_costs[key] * share_renewables[key] * constants.time_horizon for key, _ in gen_unscaled_costs.items()
     )
     net_power_costs = power_imbalance_costs(net_dict)
-    building_costs = sum(capacities.values()) * constants.power_building_costs
+    building_costs = sum(value * constants.distances[key] for key, value in capacities.items()) * constants.power_building_costs
     return gen_renewable_costs + net_power_costs + building_costs
 
 costs(
-    {"BE" : 1000, "CH" : 1000, "CZ" : 1000, "DE" : 1000, "DK" : 1000, "FR" : 1000, "LU" : 1000, "NL" : 1000, "PL" : 1000},
+    {"BE" : 1000, "CH" : 1000, "CZ" : 1000, "DK" : 1000, "FR" : 1000, "LU" : 1000, "NL" : 1000, "PL" : 1000},
     {"BE" : 1.0, "CH" : 1.0, "CZ" : 1.0, "DE" : 1.0, "DK" : 1.0, "FR" : 1.0, "LU" : 1.0, "NL" : 1.0, "PL" : 1.0}
 )
 # Frankreich: Atom gleich lassen

@@ -15,7 +15,7 @@ def json_string_to_df(json_dict):
         # Wrap the JSON string with StringIO
         json_data = StringIO(df_string)
         try:
-            df_dict[key] = pd.read_json(json_data)
+            df_dict[key] = pd.read_json(json_data).tz_convert('Europe/Brussels')
         except ValueError as e:
             print(f"Error processing key '{key}':", e)
             continue
@@ -70,20 +70,23 @@ for df in gens.values():
 # print(all_columns)
 
 renewables = {key: filter_for_renewables(gen) for key, gen in gens.items()}
+loads = {key: value["Actual Load"] for key, value in loads.items()}
 hypothetical = {key: renewables[key] * (gens[key].sum().sum() / renewables[key].sum()) for key in gens}
 
+print(loads["DE"])
 end_time = '2023-01-07'
 # end_time = '2023-01-31'
-for (country, item) in loads.items():
-    plt.plot(item.loc['2023-01-01':end_time], label=country)
+
+# for (country, item) in loads.items():
+#     plt.plot(item.loc['2023-01-01':end_time], label=country)
 plt.legend()
 plt.title("Energy Consumption")
 # plt.show()
 
-for (country, item) in renewables.items():
-    plt.plot(item.loc['2023-01-01':end_time], label=country)
-plt.legend()
-plt.title("Renewable Energy Generation")
+# for (country, item) in renewables.items():
+#     plt.plot(item.loc['2023-01-01':end_time], label=country)
+# plt.legend()
+# plt.title("Renewable Energy Generation")
 # plt.show()
 
 for (country, item) in hypothetical.items():
@@ -92,6 +95,32 @@ plt.legend()
 plt.title("Hypothetical 100% Renewable Energy Generation")
 # plt.show()
 
-gens["CH"].loc['2023-01-01':end_time].plot(kind='line', label="CH")
+end_time = '2023-01-31'
+# Load vs. generation Germany
+plt.show()
+plt.plot(hypothetical["DE"].loc['2023-01-01':end_time], label="DE: hypothetical 100% renewables generation")
+plt.plot(loads["DE"].loc['2023-01-01':end_time], label="DE: load")
+
+# Load vs. generation Germany
+sum_hypo = sum(value.resample('1h').mean() for value in hypothetical.values())
+sum_loads = sum(value.resample('1h').mean() for value in loads.values())
+plt.plot(sum_hypo.loc['2023-01-01':end_time], label="Sum of all countries: hypothetical 100% renewables generation")
+plt.plot(sum_loads.loc['2023-01-01':end_time], label="Sum of all countries: load")
+plt.legend()
+plt.xticks(rotation=-20)
+plt.title("Hypothetical generation vs. load")
+plt.savefig("./presentation/termin3/de_sum.pdf")
+plt.show()
+
+# Net generation
+net_gen_de = (hypothetical["DE"]-loads["DE"]).loc['2023-01-01':end_time]
+net_gen = (sum_hypo - sum_loads).loc['2023-01-01':end_time]
+print(net_gen_de)
+print(net_gen)
+plt.plot(net_gen_de, label="DE: hypothetical net energy")
+plt.plot(net_gen, label="Sum of all countries: hypothetical net energy")
+plt.legend()
+plt.xticks(rotation=-20)
+plt.title("Hypothetical generation minus load")
+plt.savefig("./presentation/termin3/de_sum_net.pdf")
 # plt.show()
-# print(gens["CH"].sum(axis="rows"))

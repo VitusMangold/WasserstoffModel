@@ -12,7 +12,7 @@ client = EntsoePandasClient(api_key=consumer_key)
 start = pd.Timestamp('20230101', tz='Europe/Brussels')
 end = pd.Timestamp('20240101', tz='Europe/Brussels')
 
-countries = ["BE", "CH", "CZ", "DE", "DK", "FR", "LU", "NL", "PL"]
+countries = ["BE", "CH", "CZ", "DE", "DK", "FR", "LU", "NL", "PL", "AT", "IT", "ES"]
 loads = {}
 gens = {}
 

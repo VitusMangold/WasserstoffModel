@@ -4,6 +4,7 @@ from networkx.algorithms.flow import shortest_augmenting_path
 import auto_start_end
 import constants
 import pandas as pd
+import matplotlib.pyplot as plt
 
 core_country = "DE"
 
@@ -51,20 +52,15 @@ def costs(capacities, share_renewables):
 
     net_dict = {key: pd.Series(0.0, index=loads[key].index) for key in loads}
 
-    country = 0
-    #Set line capacities between neighbor contrys
-    for country_iter in auto_start_end.order_list_neighbors:
-
-        for neighbor_iter in auto_start_end.neighbors[iter]:
-            G.add_edge(country_iter, neighbor_iter, capacity = )
-        country = country + 1
-
-
-    # Set line capacities
-    for key, value in capacities.items(): # should not be DE
-        G.add_edge(core_country, key, capacity=value)
-        G.add_edge(key, core_country, capacity=value)
-    # FIXME: Richtung zu DE
+    # Iteration über das neue Dictionary
+    for country, neighbors in capacities.items():
+        # Iteration über die Nachbarländer jedes Landes
+        for neighbor, capacity in neighbors.items():
+            # Überprüfung, ob das Nachbarland bereits im ursprünglichen dictionary vorhanden ist
+            if neighbor in capacities:
+                # Wenn vorhanden, wird die Kapazität aktualisiert
+                G.add_edge(neighbor, country, capacity=capacity)
+                G.add_edge(country, neighbor, capacity=capacity)
 
     #Add start and end node
     G, node_list = auto_start_end.start_end_node(G)
@@ -74,7 +70,7 @@ def costs(capacities, share_renewables):
         consumption_per_hour = {key: loads[key].iloc[snapshot] for key in loads}
 
         # Set power generation and consumption
-        G = auto_start_end.auto_start_end_capacity(G, production_per_hour, consumption_per_hour, node_list)
+        G = auto_start_end.start_end_node_capacity(G, production_per_hour, consumption_per_hour, node_list)
 
         _, flow_dict = nx.maximum_flow(G, "Start", "Ziel", flow_func=shortest_augmenting_path)
         calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour, net_dict, snapshot)
@@ -87,33 +83,33 @@ def costs(capacities, share_renewables):
     
     return gen_renewable_costs + net_power_costs + building_costs
 
-# Plot capacities
-results = ({'BE': 2.27628932864678, 'CH': 5613.480849211652, 'CZ': 10135.834209017168, 'DK': 1152.3246060422075, 'FR': 23997.617462034075, 'LU': 5431.8990356233335, 'NL': 43764.21927149885, 'PL': 19735.593078375066}, {'BE': 1.007471114494228, 'CH': 1.0575945698642508, 'CZ': 1.5774695858438257, 'DE': 0.0014234443207886919, 'DK': 0.6428696374671219, 'FR': 0.9610810203137954, 'LU': 2.7549141162176634, 'NL': 1.1600210850270312, 'PL': 1.98599188940605})
-graph, _ = init_graph(
-    {key: int(round(value, 0)) for key, value in results[0].items()}
-)
-pos = {"Start": (0.5, 2), "DE": (0.5, 0), "FR": (0.2, -0.5), "PL": (1, 1), "AU": (0.75, -1), "DK": (0.4, 1),"CZ": (1,0), "CH": (0.25,-1), "NL": (0.2,0.8), "BE": (0.1,0.5), "LU": (0.1,0.25),
-       "Ziel": (0.5, -2)}
+# # Plot capacities
+# results = ({'BE': 2.27628932864678, 'CH': 5613.480849211652, 'CZ': 10135.834209017168, 'DK': 1152.3246060422075, 'FR': 23997.617462034075, 'LU': 5431.8990356233335, 'NL': 43764.21927149885, 'PL': 19735.593078375066}, {'BE': 1.007471114494228, 'CH': 1.0575945698642508, 'CZ': 1.5774695858438257, 'DE': 0.0014234443207886919, 'DK': 0.6428696374671219, 'FR': 0.9610810203137954, 'LU': 2.7549141162176634, 'NL': 1.1600210850270312, 'PL': 1.98599188940605})
+# graph, _ = init_graph(
+#     {key: int(round(value, 0)) for key, value in results[0].items()}
+# )
+# pos = {"Start": (0.5, 2), "DE": (0.5, 0), "FR": (0.2, -0.5), "PL": (1, 1), "AU": (0.75, -1), "DK": (0.4, 1),"CZ": (1,0), "CH": (0.25,-1), "NL": (0.2,0.8), "BE": (0.1,0.5), "LU": (0.1,0.25),
+#        "Ziel": (0.5, -2)}
 
-# nodes
-nx.draw_networkx_nodes(graph, pos, node_size=500)
+# # nodes
+# nx.draw_networkx_nodes(graph, pos, node_size=500)
 
-# edges
-for (u, v, d) in graph.edges(data=True):
-    nx.draw_networkx_edges(graph, pos, edgelist=[(u, v)], width=d["capacity"]/5000)
+# # edges
+# for (u, v, d) in graph.edges(data=True):
+#     nx.draw_networkx_edges(graph, pos, edgelist=[(u, v)], width=d["capacity"]/5000)
 
-# node labels
-nx.draw_networkx_labels(graph, pos, font_size=20, font_family="sans-serif")
-# edge capacity labels
-edge_labels = nx.get_edge_attributes(graph, "capacity")
-nx.draw_networkx_edge_labels(graph, pos, edge_labels)
+# # node labels
+# nx.draw_networkx_labels(graph, pos, font_size=20, font_family="sans-serif")
+# # edge capacity labels
+# edge_labels = nx.get_edge_attributes(graph, "capacity")
+# nx.draw_networkx_edge_labels(graph, pos, edge_labels)
 
-ax = plt.gca()
-ax.margins(0.08)
-plt.axis("off")
-plt.tight_layout()
-plt.savefig("./presentation/termin3/capacities.pdf")
-plt.show()
+# ax = plt.gca()
+# ax.margins(0.08)
+# plt.axis("off")
+# plt.tight_layout()
+# plt.savefig("./presentation/termin3/capacities.pdf")
+# plt.show()
 
 # Frankreich: Atom gleich lassen
 # Eine Kante Fluss, Saldo positiv, Saldo negativ

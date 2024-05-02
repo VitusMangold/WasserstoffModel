@@ -6,19 +6,45 @@ from matplotlib.colors import LightSource
 from scipy.optimize import minimize
 import entsoe_multiple_model as em
 
-capacities = {"BE" : 1000, "CH" : 1000, "CZ" : 1000, "DK" : 1000, "FR" : 1000, "LU" : 1000, "NL" : 1000, "PL" : 1000}
+def count_leaves(nested_dict):
+    total_leaves = 0
+    for sub_dict in nested_dict.values():
+        total_leaves += len(sub_dict)
+    return total_leaves
+
+capacities = {
+    "DE" : { "NL" : 1000, "BE": 1000, "LU": 1000, "FR": 1000, "CH": 1000, "AT": 1000, "DK": 1000, "PL": 1000, "CZ": 1000},
+    "NL" : {"BE" : 1000, "DE" : 1000, "DK" : 1000},
+    "BE" : {"LU" : 1000, "NL" : 1000, "DE" : 1000, "FR" : 1000},
+    "LU": {"FR" : 1000, "BE" : 1000, "DE" : 1000},
+    "FR": {"ES" : 1000, "IT" : 1000, "CH" : 1000, "DE" : 1000, "LU" : 1000, "BE" : 1000},
+    "ES" : {"FR" : 1000},
+    "IT" : {"FR" : 1000, "AU" : 1000, "CH" : 1000},
+    "CH": {"AT" : 1000, "DE" : 1000, "IT" : 1000, "FR" : 1000},
+    "AT" : {"DE" : 1000, "CH" : 1000, "IT" : 1000, "CZ" : 1000},
+    "CZ" : {"DE" : 1000, "AT" : 1000, "PL" : 1000},
+    "PL" : {"CZ" : 1000, "DE" : 1000},
+    "DK" : {"DE" : 1000, "NL" : 1000}
+}
 shares = {"BE" : 1.0, "CH" : 1.0, "CZ" : 1.0, "DE" : 1.0, "DK" : 1.0, "FR" : 1.0, "LU" : 1.0, "NL" : 1.0, "PL" : 1.0}
 
 ## Minimize in all (2n - 1) dimensions
 
 # Initial guess
-x0 = [*[1e6 for _ in capacities], *[1.0 for _ in shares]]
+x0 = [*[1e6 for _ in range(count_leaves(capacities))], *[1.0 for _ in shares]]
 
-# Bounds for each variable
-bounds = [*[(0, None) for _ in capacities], *[(0, 5) for _ in shares]] # (min, max) for x and y
+# Bounds for each variable, (min, max) for x and y
+bounds = [*[(0, None) for _ in range(count_leaves(capacities))], *[(0, 5) for _ in shares]]
 
 def transform(x):
-    return {key: x[i] for i, key in enumerate(capacities)}, {key: x[i] for i, key in enumerate(shares, len(capacities))}
+    cap_iterator = iter(x[:len(capacities)])
+    for _, neighbors in capacities.items():
+        # Iteration über die Nachbarländer jedes Landes
+        for neighbor, _ in neighbors.items():
+            # Überprüfung, ob das Nachbarland bereits im ursprünglichen dictionary vorhanden ist
+            if neighbor in capacities:
+                neighbors[neighbor] = next(cap_iterator)
+    return capacities, {key: x[i + count_leaves(capacities) - 1] for i, key in enumerate(shares)}
 
 # Perform the optimization
 result = minimize(

@@ -4,19 +4,8 @@ from networkx.algorithms.flow import shortest_augmenting_path
 import auto_start_end
 import constants
 import pandas as pd
-import matplotlib.pyplot as plt
 
 core_country = "DE"
-
-def init_graph(capacities):
-    graph = nx.DiGraph()
-    net_dict = {key: pd.Series(0.0, index=loads[key].index) for key in loads}
-
-    # Set line capacities
-    for key, value in capacities.items(): # should not be DE
-        graph.add_edge(core_country, key, capacity=value)
-        graph.add_edge(key, core_country, capacity=value)
-    return graph, net_dict  
 
 def calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour,  net_dict, snapshot):
     """ Calculate the net flow for each country given the flow."""
@@ -58,17 +47,36 @@ def costs(capacities, share_renewables):
     hypothetical = {key: renewables[key] * (gen_total[key] / renewables[key].sum()) * share_renewables[key] for key in renewables}
 
     # Initialize graph
-    graph, net_dict = init_graph(capacities)
+    G = nx.DiGraph()
+
+    net_dict = {key: pd.Series(0.0, index=loads[key].index) for key in loads}
+
+    country = 0
+    #Set line capacities between neighbor contrys
+    for country_iter in auto_start_end.order_list_neighbors:
+
+        for neighbor_iter in auto_start_end.neighbors[iter]:
+            G.add_edge(country_iter, neighbor_iter, capacity = )
+        country = country + 1
+
+
+    # Set line capacities
+    for key, value in capacities.items(): # should not be DE
+        G.add_edge(core_country, key, capacity=value)
+        G.add_edge(key, core_country, capacity=value)
     # FIXME: Richtung zu DE
+
+    #Add start and end node
+    G, node_list = auto_start_end.start_end_node(G)
 
     for snapshot, _ in enumerate(hypothetical["DE"]):
         production_per_hour = {key: hypothetical[key].iloc[snapshot] for key in hypothetical}
         consumption_per_hour = {key: loads[key].iloc[snapshot] for key in loads}
 
         # Set power generation and consumption
-        graph = auto_start_end.start_end_node(graph, production_per_hour, consumption_per_hour)
+        G = auto_start_end.auto_start_end_capacity(G, production_per_hour, consumption_per_hour, node_list)
 
-        _, flow_dict = nx.maximum_flow(graph, "Start", "Ziel", flow_func=shortest_augmenting_path)
+        _, flow_dict = nx.maximum_flow(G, "Start", "Ziel", flow_func=shortest_augmenting_path)
         calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour, net_dict, snapshot)
 
     gen_renewable_costs = sum(

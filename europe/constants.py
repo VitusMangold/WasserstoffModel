@@ -7,13 +7,16 @@ power_price_renewable = 0.08 * mw_to_kw # in Euro/mWh
 power_price_overproduction = 0.10 * mw_to_kw # in Euro/mWh
 
 distances = {
-    "DE": 0,
-    "BE": 330,
-    "CH": 290,
-    "CZ": 430,
-    "DK": 480,
-    "FR": 450,
-    "LU": 170,
-    "NL": 400,
-    "PL": 930,
+    "DE" : { "NL" : 400, "BE": 330, "LU": 170, "FR": 450, "CH": 240, "AT": 600, "DK": 740, "PL": 930, "CZ": 430},
+    "NL" : {"BE" : 170, "DK" : 620},
+    "BE" : {"LU" : 190, "FR" : 260},
+    "LU": {"FR" : 290},
+    "FR": {"ES" : 1050, "IT" : 1110, "CH" : 490},
+    "ES" : { },
+    "IT" : {"AT" : 760, "CH" : 680},
+    "CH": {"AT" : 590},
+    "AT" : {"CZ" : 250},
+    "CZ" : {"PL" : 520},
+    "PL" : { },
+    "DK" : { }
 }

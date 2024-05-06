@@ -7,6 +7,7 @@ power_price_renewable = 0.08 * mw_to_kw # in Euro/mWh
 power_price_overproduction = 0.10 * mw_to_kw # in Euro/mWh
 
 distances = {
+    "DE": 0,
     "BE": 330,
     "CH": 290,
     "CZ": 430,

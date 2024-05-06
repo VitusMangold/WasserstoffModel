@@ -26,7 +26,7 @@ capacities = {
     "PL" : { },
     "DK" : { }
 }
-shares = {"BE" : 1.0, "CH" : 1.0, "CZ" : 1.0, "DE" : 1.0, "DK" : 1.0, "FR" : 1.0, "LU" : 1.0, "NL" : 1.0, "PL" : 1.0, "AU" : 1.0, "IT" : 1.0, "ES" : 1.0}
+shares = {"BE" : 1.0, "CH" : 1.0, "CZ" : 1.0, "DE" : 1.0, "DK" : 1.0, "FR" : 1.0, "LU" : 1.0, "NL" : 1.0, "PL" : 1.0, "AT" : 1.0, "IT" : 1.0, "ES" : 1.0}
 
 ## Minimize in all (2n - 1) dimensions
 
@@ -37,7 +37,7 @@ x0 = [*[1e6 for _ in range(count_leaves(capacities))], *[1.0 for _ in shares]]
 bounds = [*[(0, None) for _ in range(count_leaves(capacities))], *[(0, 5) for _ in shares]]
 
 def transform(x):
-    cap_iterator = iter(x[:len(capacities)])
+    cap_iterator = iter(x[:count_leaves(capacities)])
     for _, neighbors in capacities.items():
         # Iteration über die Nachbarländer jedes Landes
         for neighbor, _ in neighbors.items():

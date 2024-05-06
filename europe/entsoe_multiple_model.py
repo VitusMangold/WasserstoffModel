@@ -79,7 +79,8 @@ def costs(capacities, share_renewables):
         gen_unscaled_costs[key] * share_renewables[key] * constants.time_horizon for key, _ in gen_unscaled_costs.items()
     )
     net_power_costs = power_imbalance_costs(net_dict)
-    building_costs = sum(value * constants.distances[key] for key, value in capacities.items()) * constants.power_building_costs
+    # building_costs = sum(value * constants.distances[key] for key, value in capacities.items()) * constants.power_building_costs
+    building_costs = sum(sum([v * 400 for v in value.values()]) for value in capacities.values()) * constants.power_building_costs
     
     return gen_renewable_costs + net_power_costs + building_costs
 

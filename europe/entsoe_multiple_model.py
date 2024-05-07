@@ -5,19 +5,23 @@ import auto_start_end
 import constants
 import pandas as pd
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
 
 core_country = "DE"
 
 def calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour,  net_dict, snapshot):
-    """ Calculate the net flow for each country given the flow."""
+    """Calculate the net flow for each country given the flow."""
     # Flows from core country to other countries
     # core_to_countries = 0.0
     for key in flow_dict:
         if key not in ["Start", "Ziel"]:
-            net_dict[key].iloc[snapshot] = (production_per_hour[key] - flow_dict["Start"][key]) - (consumption_per_hour[key] - flow_dict[key]["Ziel"])
+            net_dict[key].iloc[snapshot] = (
+                (production_per_hour[key] - flow_dict["Start"][key])
+                - (consumption_per_hour[key] - flow_dict[key]["Ziel"])
+            )
 
 def power_imbalance_costs(net_dict):
-    """ Calculate the net costs for the power imbalance. 
+    """Calculate the net costs for the power imbalance.
     We can never get a negative cost (storage intuition: can not get paid for storing more than).
     """
     def pos_reward(total):
@@ -40,17 +44,30 @@ gen_total = {key: value.loc['2023-01-01':end_time].sum().sum() for key, value in
 # These are the costs for the total yearly generation per country with the renewable power prices
 gen_unscaled_costs = {key: value * constants.power_price_renewable for key, value in gen_total.items()}
 
-def costs(capacities, share_renewables):
-    """
-    This is our objective function (total costs).
-    """
-    # We scale up our renewables by the current total generation scaled by share_renewable
-    hypothetical = {key: renewables[key] * (gen_total[key] / renewables[key].sum()) * share_renewables[key] for key in renewables}
+def snapshots_per_thread(graph, node_list, snapshots, hypothetical, loads, net_dict):
+    """ Process snapshots for a given thread. """
+    for snapshot in snapshots:
+        production_per_hour = {key: hypothetical[key].iloc[snapshot] for key in hypothetical}
+        consumption_per_hour = {key: loads[key].iloc[snapshot] for key in loads}
 
-    # Initialize graph
+        # Set power generation and consumption
+        graph = auto_start_end.start_end_node_capacity(graph, production_per_hour, consumption_per_hour, node_list)
+
+        _, flow_dict = nx.maximum_flow(graph, "Start", "Ziel", flow_func=shortest_augmenting_path)
+        calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour, net_dict, snapshot)
+
+def threading_func(x):
+    """Wrapper function for multiprocessing."""
+    snapshots_per_thread(*x)
+
+def split(a, n):
+    """Split a list into n approximately equal parts."""
+    k, m = divmod(len(a), n)
+    return [a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]
+
+def init_graph(capacities):
+    """Initialize the graph."""
     G = nx.DiGraph()
-
-    net_dict = {key: pd.Series(0.0, index=loads[key].index) for key in loads}
 
     # Iteration über das neue Dictionary
     for country, neighbors in capacities.items():
@@ -62,26 +79,35 @@ def costs(capacities, share_renewables):
                 G.add_edge(neighbor, country, capacity=capacity)
                 G.add_edge(country, neighbor, capacity=capacity)
 
-    #Add start and end node
+    # Add start and end node
     G, node_list = auto_start_end.start_end_node(G)
+    return G, node_list
 
-    for snapshot, _ in enumerate(hypothetical["DE"]):
-        production_per_hour = {key: hypothetical[key].iloc[snapshot] for key in hypothetical}
-        consumption_per_hour = {key: loads[key].iloc[snapshot] for key in loads}
+def costs(capacities, share_renewables):
+    """
+    This is our objective function (total costs).
+    """
 
-        # Set power generation and consumption
-        G = auto_start_end.start_end_node_capacity(G, production_per_hour, consumption_per_hour, node_list)
+    # We scale up our renewables by the current total generation scaled by share_renewable
+    hypothetical = {key: renewables[key] * (gen_total[key] / renewables[key].sum()) * share_renewables[key] for key in renewables}
 
-        _, flow_dict = nx.maximum_flow(G, "Start", "Ziel", flow_func=shortest_augmenting_path)
-        calculate_net_flow(flow_dict, production_per_hour, consumption_per_hour, net_dict, snapshot)
+    net_dict = {key: pd.Series(0.0, index=loads[key].index) for key in loads}
+
+    # Number of threads
+    n_threads = 6
+    graphs = [init_graph(capacities) for _ in range(n_threads)]
+    snapshots_split = split(range(len(hypothetical["DE"])), n_threads)
+    with Pool(n_threads) as p:
+        p.map(threading_func, [(graphs[i][0], graphs[i][1], snapshots_split[i], hypothetical, loads, net_dict) for i in range(n_threads)])
 
     gen_renewable_costs = sum(
         gen_unscaled_costs[key] * share_renewables[key] * constants.time_horizon for key, _ in gen_unscaled_costs.items()
     )
     net_power_costs = power_imbalance_costs(net_dict)
     building_costs = sum(sum([v * value[k] for k, v in value.items()]) for value in capacities.values()) * constants.power_building_costs
-    
+
     return gen_renewable_costs + net_power_costs + building_costs
+
 
 # # Plot capacities
 # results = ({'BE': 2.27628932864678, 'CH': 5613.480849211652, 'CZ': 10135.834209017168, 'DK': 1152.3246060422075, 'FR': 23997.617462034075, 'LU': 5431.8990356233335, 'NL': 43764.21927149885, 'PL': 19735.593078375066}, {'BE': 1.007471114494228, 'CH': 1.0575945698642508, 'CZ': 1.5774695858438257, 'DE': 0.0014234443207886919, 'DK': 0.6428696374671219, 'FR': 0.9610810203137954, 'LU': 2.7549141162176634, 'NL': 1.1600210850270312, 'PL': 1.98599188940605})

@@ -123,11 +123,11 @@ plt.title("Hypothetical generation minus load")
 
 # end_time = '2023-01-07'
 # plt.show()
-# scale = {'BE': 1.007471114494228, 'CH': 1.0575945698642508, 'CZ': 1.5774695858438257, 'DE': 0.0014234443207886919, 'DK': 0.6428696374671219, 'FR': 0.9610810203137954, 'LU': 2.7549141162176634, 'NL': 1.1600210850270312, 'PL': 1.98599188940605}
-# print({key: round(value, 3) for key, value in scale.items()})
-# hypothetical = {key: value * scale[key] for key, value in hypothetical.items()}
-# sum_hypo_new = sum(value.resample('1h').mean() for value in hypothetical.values())
-# sum_loads = sum(value.resample('1h').mean() for value in loads.values())
+scale = {'BE': 386.4585765329821, 'CH': 4.830147190694033, 'CZ': 2.2230351246532223, 'DE': 4.456057892572025, 'DK': 1.0816395677033008, 'FR': 3.184470342604632, 'LU': 3.1037266040483917, 'NL': 4.994661068762497, 'PL': 0.5225869094222586, 'AT': 0.2856393203468456, 'IT': 2.5389100007338445, 'ES': 0.051498144647763616}
+print({key: round(value, 3) for key, value in scale.items()})
+hypothetical = {key: value * scale[key] for key, value in hypothetical.items()}
+sum_hypo_new = sum(value.resample('1h').mean() for value in hypothetical.values())
+sum_loads = sum(value.resample('1h').mean() for value in loads.values())
 # plt.plot(sum_hypo.loc['2023-01-01':end_time], label="Sum of all countries: hypothetical 100% renewables generation")
 # plt.plot(sum_hypo_new.loc['2023-01-01':end_time], label="Sum of all countries: hypothetical variable renewables generation")
 # plt.plot(sum_loads.loc['2023-01-01':end_time], label="Sum of all countries: load")

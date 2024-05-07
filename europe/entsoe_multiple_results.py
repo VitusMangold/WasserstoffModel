@@ -26,17 +26,58 @@ capacities = {
     "PL" : { },
     "DK" : { }
 }
-shares = {"BE" : 1.0, "CH" : 1.0, "CZ" : 1.0, "DE" : 1.0, "DK" : 1.0, "FR" : 1.0, "LU" : 1.0, "NL" : 1.0, "PL" : 1.0, "AT" : 1.0, "IT" : 1.0, "ES" : 1.0}
+shares = {"BE" : 1.2, "CH" : 1.2, "CZ" : 1.2, "DE" : 1.2, "DK" : 1.2, "FR" : 1.2, "LU" : 1.2, "NL" : 1.2, "PL" : 1.2, "AT" : 1.2, "IT" : 1.2, "ES" : 1.2}
+
+## Minimize in (n - 1) dimensions (fixed shares)
+
+# Initial guess
+x0 = [1e6 for _ in range(count_leaves(capacities))]
+
+# Bounds for each variable, (min, max) for x and y
+bounds = [(0, None) for _ in range(count_leaves(capacities))]
+
+def transform(x):
+    cap_iterator = iter(x[:count_leaves(capacities)])
+    for _, neighbors in capacities.items():
+        # Iteration über die Nachbarländer jedes Landes
+        for neighbor, _ in neighbors.items():
+            # Überprüfung, ob das Nachbarland bereits im ursprünglichen dictionary vorhanden ist
+            if neighbor in capacities:
+                neighbors[neighbor] = next(cap_iterator)
+    return capacities
+
+# Callback function to log iteration
+iteration = 0
+def log_iteration(xk):
+    global iteration
+    print(f"Iteration {iteration}: Current parameter values: {xk}")
+    iteration += 1
+
+# Perform the optimization
+result = minimize(
+    lambda x: em.costs(transform(x), shares),
+    x0,
+    method='Nelder-Mead',
+    bounds=bounds,
+    callback=log_iteration
+)
+
+# Extract the results
+optimized_parameters = result.x
+minimum_value = result.fun
+
+print("Optimized parameters:", transform(optimized_parameters))
+print("Minimum value:", minimum_value)
 
 ## Minimize in all (2n - 1) dimensions
 
 # Initial guess
-x0 = [*[1e6 for _ in range(count_leaves(capacities))], *[1.0 for _ in shares]]
+x0 = [*[1e6 for _ in range(count_leaves(capacities))], *[1.2 for _ in shares]]
 
 # Bounds for each variable, (min, max) for x and y
 bounds = [*[(0, None) for _ in range(count_leaves(capacities))], *[(0, 5) for _ in shares]]
 
-def transform(x):
+def transform_all(x):
     cap_iterator = iter(x[:count_leaves(capacities)])
     for _, neighbors in capacities.items():
         # Iteration über die Nachbarländer jedes Landes
@@ -48,7 +89,7 @@ def transform(x):
 
 # Perform the optimization
 result = minimize(
-    lambda x: em.costs(*transform(x)),
+    lambda x: em.costs(*transform_all(x)),
     x0,
     method='Nelder-Mead',
     bounds=bounds
@@ -58,5 +99,5 @@ result = minimize(
 optimized_parameters = result.x
 minimum_value = result.fun
 
-print("Optimized parameters:", transform(optimized_parameters))
+print("Optimized parameters:", transform_all(optimized_parameters))
 print("Minimum value:", minimum_value)

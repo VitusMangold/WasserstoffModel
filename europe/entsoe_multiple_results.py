@@ -1,4 +1,4 @@
-""" Results from ENTSOE two-country model. """
+""" Results from ENTSOE multi-country model. """
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cbook, cm

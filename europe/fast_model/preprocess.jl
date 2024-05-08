@@ -1,10 +1,3 @@
-using DataFrames
-using JSON
-using Dates
-using TimeZones
-using Statistics
-using Pipe
-
 # Parse data
 data_json = JSON.parsefile("energy_data.json")
 gens = data_json["generation"]
@@ -123,6 +116,3 @@ function calc_loads_ren(gens, loads, renewables, freq=Hour(1))
 end
 
 loads, hypothetical = calc_loads_ren(gens, loads, renewables)
-
-using Optim
-using Plots

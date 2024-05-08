@@ -2,6 +2,7 @@ Base.@kwdef struct MaxflowModel
     ids::Dict{String, Int64}
     hypothetical::Dict{String, Vector{Float64}}
     loads::Dict{String, Vector{Float64}}
+    net_dict::Dict{String, Vector{Float64}} # this is just used as inplace writing buffer
     unscaled_costs::Dict{String, Float64}
     distances::Dict{String, Dict{String, Float64}}
     time_horizon::Float64
@@ -29,4 +30,13 @@ function init_graph(model, capacities)
     end
 end
 
-partition(iter, n_chunks) = Iterators.partition(iter, div(length(iter) + n_chunks - 1, n_chunks))
+function calc_net_flow!(; model, flow_matrix, hypo, snapshot)
+    for key in keys(model.net_dict)
+        generation = hypo[key][snapshot]
+        loading = model.loads[key][snapshot]
+        model.net_dict[key][snapshot] = (
+            (generation - flow_matrix[model.ids["start"], model.ids[key]]) -
+            (loading - flow_matrix[model.ids[key], model.ids["end"]])
+        )
+    end
+end

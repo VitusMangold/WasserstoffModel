@@ -7,12 +7,12 @@ using Pipe
 using Optim
 using Plots
 
-include("preprocess.jl")
-
 using Graphs
 using GraphsFlows
 
+include("preprocess.jl")
 include("model.jl")
+include("costs.jl")
 
 plot(model_loads["DE"][1:(31*24)]);
 plot!(model_hypothetical["DE"][1:(31*24)])
@@ -45,3 +45,17 @@ model = MaxflowModel(
     power_price_renewable = 0.08 * mw_to_kw, # in Euro/mWh
     power_price_overproduction = 0.10 * mw_to_kw, # in Euro/mWh
 )
+
+function find_optimum(model)
+
+    function transform(model, x)
+        share_ren = Dict(key => x[i] for (i, key) in enumerate(keys(model.hypothetical)))
+        return share_ren
+    end
+
+    # initial = zeros(length(model.hypothetical)), [1.0 for _ in keys(model.hypothetical)]
+    result = optimize(
+        x -> costs(model, transform(model, x)...),
+    )
+    return Optim.minimizer(result)
+end

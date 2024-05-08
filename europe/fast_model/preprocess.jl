@@ -111,8 +111,9 @@ resample_data(gens["IT"], Hour(1))
 function calc_loads_ren(gens, loads, renewables, freq=Hour(1))
     loads = Dict(key => resample_data(value, freq)[!, "Actual Load"] for (key, value) in loads)
     renewable_sums = Dict(key => get_renewables(resample_data(gen, freq), renewables) for (key, gen) in gens)
-    hypothetical = Dict(key => renewable_sums[key] .* (sum(eachcol(resample_data(gens[key], freq)[!, 2:end])) / sum(renewable_sums[key])) for key in keys(gens))
+    # println(renewable_sums)
+    hypothetical = Dict(key => renewable_sums[key] * (sum(sum(eachcol(resample_data(gens[key], freq)[!, 2:end]))) / sum(renewable_sums[key])) for key in keys(gens))
     return loads, hypothetical
 end
 
-loads, hypothetical = calc_loads_ren(gens, loads, renewables)
+model_loads, model_hypothetical = calc_loads_ren(gens, loads, renewables)

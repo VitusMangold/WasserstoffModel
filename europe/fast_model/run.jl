@@ -5,6 +5,7 @@ using TimeZones
 using Statistics
 using Pipe
 using Optim
+using FLoops
 using Plots
 
 using Graphs
@@ -52,7 +53,7 @@ function count_leaves(nested_dict)
     return sum(length(sub_dict) for sub_dict in values(nested_dict))
 end
 
-function find_optimum(model)
+function find_optimum(model; n_chunks=60)
 
     initial_cap = Dict(
         key => Dict(key => 1000.0 for neighbor in keys(value))
@@ -80,13 +81,11 @@ function find_optimum(model)
     end
 
     initial = [[1000.0 for _ in 1:count_leaves(model.distances)]; [1.0 for _ in initial_share]]
-    # println(length(initial))
-    # println(initial)
     result = optimize(
-        x -> costs(model, transform(x)...),
+        x -> costs(model, transform(x)..., n_chunks),
         initial
     )
     return Optim.minimizer(result)
 end
 
-find_optimum(model)
+@time find_optimum(model, n_chunks=60)

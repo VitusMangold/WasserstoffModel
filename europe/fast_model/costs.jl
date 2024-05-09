@@ -39,7 +39,7 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         end
     end
 
-    for part in partition(eachindex(model.hypothetical["DE"]), n_chunks)
+    @floop for part in partition(eachindex(model.hypothetical["DE"]), n_chunks)
         calc_snapshots!(part)
     end
 

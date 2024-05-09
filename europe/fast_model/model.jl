@@ -3,7 +3,7 @@ Base.@kwdef struct MaxflowModel
     hypothetical::Dict{String, Vector{Float64}}
     loads::Dict{String, Vector{Float64}}
     net_dict::Dict{String, Vector{Float64}} # this is just used as inplace writing buffer
-    unscaled_costs::Dict{String, Float64}
+    total_gen::Dict{String, Float64}
     distances::Dict{String, Dict{String, Float64}}
     time_horizon::Float64
     power_building_costs::Float64
@@ -14,8 +14,10 @@ end
 
 """Initialize the directed graph."""
 function init_graph(model, capacities)
-    capacity_matrix = zeros(Int, 8, 8)
-    graph = DiGraph()
+    n_nodes = length(model.ids)
+    # TODO: use sparse matrix
+    graph = DiGraph(n_nodes)
+    capacity_matrix = zeros(n_nodes, n_nodes)
 
     # Iteration über die Nachbarländer jedes Landes
     for (country, neighbors) in capacities
@@ -28,6 +30,7 @@ function init_graph(model, capacities)
             capacity_matrix[y, x] = capacity
         end
     end
+    return graph, capacity_matrix
 end
 
 function calc_net_flow!(; model, flow_matrix, hypo, snapshot)

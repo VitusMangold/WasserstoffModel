@@ -35,11 +35,12 @@ distances = Dict(
 )
 
 model = MaxflowModel(
+    ids=Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(model_loads))]]),
     hypothetical=model_hypothetical,
     loads=model_loads,
     net_dict=Dict(key => zeros(length(value)) for (key, value) in model_loads),
-    unscaled_costs=unscaled_costs,
-    distances=distances, 
+    total_gen=Dict(key => sum(value) for (key, value) in model_hypothetical),
+    distances=distances,
     time_horizon = 20 * 52, # in years (52 weeks per year))
     power_building_costs = 14.3 * mw_to_kw, # in €/(mW * km), Nord-Sued-Link
     power_price_conventional = 0.3 * mw_to_kw, # in Euro/mWh
@@ -47,31 +48,45 @@ model = MaxflowModel(
     power_price_overproduction = 0.10 * mw_to_kw, # in Euro/mWh
 )
 
+function count_leaves(nested_dict)
+    return sum(length(sub_dict) for sub_dict in values(nested_dict))
+end
+
 function find_optimum(model)
 
-    function transform(model, x)
-        share_ren = Dict(key => x[i] for (i, key) in enumerate(keys(model.hypothetical)))
-        return share_ren
+    initial_cap = Dict(
+        key => Dict(key => 1000.0 for neighbor in keys(value))
+        for (key, value) in model.distances
+    )
+    initial_share = Dict(key => 1.0 for key in keys(model.hypothetical))
+
+    function transform(x)
+        next = iterate(x)
+        for (key, value) in model.distances
+            for neighbor in keys(value)
+                (val, state) = next
+                # println(key, neighbor, val)
+                initial_cap[key][neighbor] = val
+                next = iterate(x, state)
+            end
+        end
+        for key in keys(model.hypothetical)
+            (val, state) = next
+            initial_share[key] = val
+            next = iterate(x, state)
+        end
+
+        return initial_cap, initial_share
     end
 
-    # initial = zeros(length(model.hypothetical)), [1.0 for _ in keys(model.hypothetical)]
+    initial = [[1000.0 for _ in 1:count_leaves(model.distances)]; [1.0 for _ in initial_share]]
+    # println(length(initial))
+    # println(initial)
     result = optimize(
-        x -> costs(model, transform(model, x)...),
+        x -> costs(model, transform(x)...),
+        initial
     )
     return Optim.minimizer(result)
 end
 
-flow_graph = Graphs.DiGraph(8)
-flow_edges = [
-    (1,2,10),(1,3,5),(1,4,15),(2,3,4),(2,5,9),
-    (2,6,15),(3,4,4),(3,6,8),(4,7,16),(5,6,15),
-    (5,8,10),(6,7,15),(6,8,10),(7,3,6),(7,8,10)
-]
-capacity_matrix = zeros(8, 8)
-for e in flow_edges
-    u, v, f = e
-    Graphs.add_edge!(flow_graph, u, v)
-    capacity_matrix[u,v] = f
-end
-f, F = maximum_flow(flow_graph, 1, 8, capacity_matrix)
-F
+find_optimum(model)

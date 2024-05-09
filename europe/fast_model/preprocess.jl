@@ -25,8 +25,8 @@ to_df(data) = @pipe data |>
     transform(_, names(_)[2:end] .=> ByRow(passmissing(x -> isnothing(x) ? missing : convert(Float64, x))), renamecols=false)    
 
 function convert_to_dfs!(data)
+    println("Convert to DataFrame...")
     for key in keys(data)
-        println(key)
         data[key] = @pipe data[key] |>
             JSON.parse(_) |>
             to_df(_)
@@ -98,22 +98,36 @@ get_all_names(gens)
 # Set 0.0 if no data available
 resample(x) = isempty(x) ? 0.0 : mean(x)
 
-function resample_data(df, freq)
+function handle_missing_time(df, country, start_time, end_time, freq)
+    times = start_time:freq:end_time
+    for (i, time) in enumerate(times)
+        if time != df[i, "Date"]
+            insert!(df, i, df[i - 1, :])
+            df[i, "Date"] = time
+            println("Missing time point in: ", country, " ", time)
+        end
+    end
+end
+
+function resample_data(df, freq, country)
     sort!(df)
     df[!, "Date"] = floor.(df[!, "Date"], freq)
     result = combine(groupby(df, "Date"), names(df)[2:end] .=> (resample ∘ skipmissing), renamecols=false)
+    
+    start_time = DateTime("2023-01-01T00:00:00", dateformat"yyyy-mm-ddTHH:MM:SS.sss")
+    end_time = DateTime("2023-12-31T23:00:00", dateformat"yyyy-mm-ddTHH:MM:SS.sss")
+    handle_missing_time(result, country, start_time, end_time, freq)
     return result
 end
 
-resample_data(gens["IT"], Hour(1))
-
 # Get our model vectors
 function calc_loads_ren(gens, loads, renewables, freq=Hour(1))
-    loads = Dict(key => resample_data(value, freq)[!, "Actual Load"] for (key, value) in loads)
-    renewable_sums = Dict(key => get_renewables(resample_data(gen, freq), renewables) for (key, gen) in gens)
-    # println(renewable_sums)
-    hypothetical = Dict(key => renewable_sums[key] * (sum(sum(eachcol(resample_data(gens[key], freq)[!, 2:end]))) / sum(renewable_sums[key])) for key in keys(gens))
+    loads = Dict(key => resample_data(value, freq, key)[!, "Actual Load"] for (key, value) in loads)
+    renewable_sums = Dict(key => get_renewables(resample_data(gen, freq, key), renewables) for (key, gen) in gens)
+    hypothetical = Dict(key => renewable_sums[key] * (sum(sum(eachcol(resample_data(gens[key], freq, key)[!, 2:end]))) / sum(renewable_sums[key])) for key in keys(gens))
     return loads, hypothetical
 end
 
 model_loads, model_hypothetical = calc_loads_ren(gens, loads, renewables)
+
+[key => length(value) for (key, value) in model_hypothetical]

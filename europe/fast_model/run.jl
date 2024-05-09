@@ -42,7 +42,7 @@ model = MaxflowModel(
     net_dict=Dict(key => zeros(length(value)) for (key, value) in model_loads),
     total_gen=Dict(key => sum(value) for (key, value) in model_hypothetical),
     distances=distances,
-    time_horizon = 20 * 52, # in years (52 weeks per year))
+    time_horizon = 20, # in years
     power_building_costs = 14.3 * mw_to_kw, # in €/(mW * km), Nord-Sued-Link
     power_price_conventional = 0.3 * mw_to_kw, # in Euro/mWh
     power_price_renewable = 0.08 * mw_to_kw, # in Euro/mWh
@@ -85,7 +85,15 @@ function find_optimum(model; n_chunks=60)
         x -> costs(model, transform(x)..., n_chunks),
         initial
     )
-    return Optim.minimizer(result)
+    return transform(Optim.minimizer(result))
 end
 
-@time find_optimum(model, n_chunks=60)
+sol_cap, sol_shares = @time find_optimum(model, n_chunks=60)
+
+function plot_shares(sol_shares)
+    lab = collect(keys(sol_shares))
+    bar([sol_shares[key] for key in lab], xticks = (eachindex(lab), lab), legend=false, title="Optimal share of renewable energy")
+end
+
+plot_shares(sol_shares)
+savefig("optimal_shares.png")

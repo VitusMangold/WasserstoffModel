@@ -34,6 +34,7 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         graph, mat = init_graph(model, capacities)
         
         for snapshot in snapshots
+            set_start_end!(mat, model, hypo, snapshot)
             _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat)
             calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
         end
@@ -47,7 +48,9 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         model.total_gen[key] * share_ren[key] * model.time_horizon for key in keys(model.total_gen)
     )
     net_power_costs = power_imbalance_costs(model)
-    building_costs = sum(sum([v * value[k] for (k, v) in value]) for value in values(capacities)) * model.power_building_costs
+    building_costs = sum(
+        v * model.distances[country][k] for (country, value) in capacities for (k, v) in value
+    ) * model.power_building_costs
 
     return gen_renewable_costs + net_power_costs + building_costs
 end

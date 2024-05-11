@@ -35,7 +35,7 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         
         for snapshot in snapshots
             set_start_end!(mat, model, hypo, snapshot)
-            _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat)
+            _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
             calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
         end
     end

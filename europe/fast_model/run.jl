@@ -4,19 +4,16 @@ using Dates
 using TimeZones
 using Statistics
 using Pipe
-using Optim
 using FLoops
 using Plots
 using Graphs
 using GraphsFlows
 using OrderedCollections
+using Optimization, OptimizationOptimJL, OptimizationNLopt
 
 include("preprocess.jl")
 include("model.jl")
 include("costs.jl")
-
-plot(model_loads["DE"][1:(31*24)]);
-plot!(model_hypothetical["DE"][1:(31*24)])
 
 const mw_to_kw = 1000.0
 
@@ -45,9 +42,9 @@ model = MaxflowModel(
     time_horizon = 20, # in years
     # FIXME: wieso wurde vorher gebaut?
     power_building_costs = 14.3 * mw_to_kw, # in €/(mW * km), Nord-Sued-Link
-    power_price_conventional = 0.08 * mw_to_kw, # in Euro/mWh
+    power_price_conventional = 0.30 * mw_to_kw, # in Euro/mWh
     power_price_renewable = 0.08 * mw_to_kw, # in Euro/mWh
-    power_price_overproduction = 0.0 * mw_to_kw, # in Euro/mWh
+    power_price_overproduction = 0.10 * mw_to_kw, # in Euro/mWh
 )
 
 function count_leaves(nested_dict)
@@ -80,20 +77,30 @@ function find_optimum(model; n_chunks=60)
         return initial_cap, initial_share
     end
 
+    # Define the cost function to be minimized; parameters are redundant for now
+    cost_function = (x, p) -> costs(model, transform(x)..., n_chunks)
+
     lower = [[0.0 for _ in 1:count_leaves(model.distances)]; [0.0 for _ in initial_share]]
-    upper = [[Inf for _ in 1:count_leaves(model.distances)]; [10 for _ in initial_share]]
+    upper = [[100000. for _ in 1:count_leaves(model.distances)]; [3.0 for _ in initial_share]]
     initial = [[1000.0 for _ in 1:count_leaves(model.distances)]; [1.0 for _ in initial_share]]
 
-    result = optimize(
-        x -> costs(model, transform(x)..., n_chunks),
-        lower,
-        upper,
-        initial
-    )
-    return transform(Optim.minimizer(result))
+    # Optimization problem
+    prob = OptimizationProblem(cost_function, initial, lb = lower, ub = upper, sense=MinSense)
+
+    # Solution
+    results = solve(prob, NLopt.LN_NELDERMEAD(), maxtime=600) # 150s
+    # results = solve(prob, NLopt.LN_COBYLA, maxtime=1200) # ~ 600s stuck in local minimum
+    # results = solve(prob, NLopt.LN_BOBYQA, maxtime=1200) # ~ stuck 65s in local minimum
+
+    # Print whether the optimization was successful
+    println("Optimization status: ", results.retcode)
+    println("Min value: ", results.objective)
+
+    # Extract the minimizer and transform it back if necessary
+    return transform(results.u)
 end
 
-sol_cap, sol_shares = @time find_optimum(model, n_chunks=60)
+sol_cap, sol_shares = @time find_optimum(model, n_chunks=6)
 
 function plot_shares(sol_shares)
     lab = collect(keys(sol_shares))
@@ -112,6 +119,5 @@ savefig("optimal_shares.png")
 
 plot_country(model, sol_shares, "DE")
 
-# sum(
-#         v * model.distances[country][k] for (country, value) in sol_cap for (k, v) in value
-#     ) * model.power_building_costs
+# plot(model_loads["DE"][1:(31*24)]);
+# plot!(model_hypothetical["DE"][1:(31*24)])

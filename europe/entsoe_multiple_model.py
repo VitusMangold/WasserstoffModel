@@ -56,6 +56,7 @@ def costs(capacities, share_renewables):
     for country, neighbors in capacities.items():
         # Iteration über die Nachbarländer jedes Landes
         for neighbor, capacity in neighbors.items():
+            # FIXME: unnecessary
             # Überprüfung, ob das Nachbarland bereits im ursprünglichen dictionary vorhanden ist
             if neighbor in capacities:
                 # Wenn vorhanden, wird die Kapazität aktualisiert

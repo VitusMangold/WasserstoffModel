@@ -54,3 +54,9 @@ function calc_net_flow!(; model, flow_matrix, hypo, snapshot)
         )
     end
 end
+
+const mw_to_kw = 1000.0
+
+function count_leaves(nested_dict)
+    return sum(length(sub_dict) for sub_dict in values(nested_dict))
+end

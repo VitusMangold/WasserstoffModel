@@ -26,6 +26,12 @@ function power_imbalance_costs(model)
     return sum(net_costs(value) for value in values(model.net_dict))
 end
 
+function build_costs(model, capacities)
+    sum(
+        v * model.distances[country][k] for (country, value) in capacities for (k, v) in value
+    ) * model.power_building_costs
+end
+
 function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
     hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
 
@@ -48,9 +54,7 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         model.total_gen[key] * share_ren[key] * model.time_horizon for key in keys(model.total_gen)
     )
     net_power_costs = power_imbalance_costs(model)
-    building_costs = sum(
-        v * model.distances[country][k] for (country, value) in capacities for (k, v) in value
-    ) * model.power_building_costs
+    building_costs = build_costs(model, capacities)
 
     return gen_renewable_costs + net_power_costs + building_costs
 end

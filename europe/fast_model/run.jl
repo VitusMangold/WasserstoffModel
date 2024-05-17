@@ -22,11 +22,11 @@ results_same = @time find_optimum(model, scenario=:same, n_chunks=6)
 results_fixed = @time find_optimum(model, scenario=:fixed, n_chunks=6)
 results_no_cap = @time find_optimum(model, scenario=:no_cap, n_chunks=6)
 results_nothing = @time find_optimum(model, scenario=:nothing, n_chunks=6)
-results_no_cap_fixed = @time find_optimum(model, scenario=:no_cap_fixed, n_chunks=6)
+results_no_cap_same = @time find_optimum(model, scenario=:no_cap_same, n_chunks=6)
 
 # Scenario with halfed building costs
 results_half_all = @time find_optimum(model_half, scenario=:all, n_chunks=6)
-results_half_no_cap_fixed = @time find_optimum(model_half, scenario=:no_cap_fixed, n_chunks=6)
+results_half_no_cap = @time find_optimum(model_half, scenario=:no_cap, n_chunks=6)
 
 # If you want to save just one, you can simply comment out the others
 jldopen("results.jld2", "a+") do file
@@ -39,7 +39,7 @@ jldopen("results.jld2", "a+") do file
     file["results_fixed"] = results_fixed
     file["results_no_cap"] = results_no_cap
     file["results_nothing"] = results_nothing
-    file["results_no_cap_fixed"] = results_no_cap_fixed
+    file["results_no_cap_same"] = results_no_cap_same
     file["results_half_all"] = results_half_all
-    file["results_half_no_cap_fixed"] = results_half_no_cap_fixed
+    file["results_half_no_cap"] = results_half_no_cap
 end

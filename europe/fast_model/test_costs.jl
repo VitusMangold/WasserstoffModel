@@ -29,4 +29,5 @@ function test(x, n_chunks=48)
 end
 
 x = [[100.0 for _ in 1:22]; [1.1 for _ in 1:12]]
-test(x)
+using BenchmarkTools
+@btime test(x)

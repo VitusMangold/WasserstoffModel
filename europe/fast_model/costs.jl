@@ -38,10 +38,12 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
     # This is a thread-safe function if snapshots are disjoint
     function calc_snapshots!(snapshots)
         graph, mat = init_graph(model, capacities)
+        solver = create_solver(mat, model.ids["start"], model.ids["end"])
         
         for snapshot in snapshots
             set_start_end!(mat, model, hypo, snapshot)
-            _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
+            # _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
+            _, F = max_flow_lp(solver,  mat)
             calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
         end
     end

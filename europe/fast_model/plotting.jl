@@ -4,8 +4,11 @@ function plot_shares(sol_shares)
 end
 
 function plot_country(model, sol_shares, country)
-    plot(model.hypothetical[country] * sol_shares[country], label="Optimized generation");
-    plot!(-model.loads[country], label="Power consumption")
-    plot!(model.net_dict[country], label="Net generation")
-    title!("Optimal generation and consumption for $(country)")
+    hypo = model.hypothetical[country] * sol_shares[country]
+    loads = model.loads[country]
+    net = hypo - loads
+    plot(hypo, label="Optimized generation");
+    plot!(-loads, label="Power consumption")
+    plot!(net, label="Net generation")
+    title!("Generation and consumption for $(country)")
 end

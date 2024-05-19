@@ -39,10 +39,12 @@ function costs(model::MaxflowModel, capacities, share_ren)
     function calc_snapshots!(snapshots)
         
         Threads.@threads for snapshot in snapshots
-            # set_start_end!(mat, model, hypo, snapshot)
-            # _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
-            _, F = max_flow_lp(capacities, model, hypo, snapshot)
+            F, grad = max_flow_lp(capacities, model, hypo, snapshot)
             calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
+            if snapshot == 1
+                println(F)
+                println(grad)
+            end
         end
     end
 

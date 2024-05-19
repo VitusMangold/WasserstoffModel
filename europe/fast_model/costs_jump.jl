@@ -22,7 +22,8 @@ function init_all_solvers!(model)
 end
 
 function create_solver(model, distance_matrix, source, target)
-    solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "log_to_console" => false)))
+    # solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "log_to_console" => false)))
+    solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
     set_silent(solver)
     n = size(distance_matrix, 1)
     @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
@@ -35,9 +36,13 @@ function create_solver(model, distance_matrix, source, target)
 end
 
 function max_flow_lp(capacities, model, hypo, snapshot)
+    n_vars = length(keys(model.ids))
     solver = model.solvers[snapshot]
 
-    set!(i, j, c) = set_upper_bound(solver[:f][i, j], c)
+    function set!(i, j, c)
+        set_upper_bound(solver[:f][i, j], c)
+        DiffOpt.Parameter(c)
+    end
 
     for key in keys(model.net_dict)
         generation = hypo[key][snapshot]
@@ -60,7 +65,16 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     # throw(InterruptException())
     @assert is_solved_and_feasible(solver)
     objective_value(solver)
-    return nothing, value.(solver[:f])
+    val = value.(solver[:f])
+    # println(typeof(solver[:f]))
+    # vect = MOI.get.(solver, MOI.VariablePrimal(), solver[:f])
+    # func = MOI.get(solver, DiffOpt.ReverseObjectiveFunction())
+    # grad = JuMP.coefficient(func, solver[:f])
+    grad = MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], -1.0) # Containers.@container([i = 1:n_vars, j = 1:n_vars; near(model, i, j)], 1.0))
+    DiffOpt.reverse_differentiate!(solver)
+    obj_exp = MOI.get(solver, DiffOpt.ReverseObjectiveFunction())
+    grad = JuMP.coefficient.(obj_exp, solver[:f])
+    return val, grad
 end
 
 function near(model, x, y)

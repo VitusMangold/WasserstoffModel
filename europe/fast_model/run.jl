@@ -11,6 +11,13 @@ using OrderedCollections
 using Optimization, OptimizationOptimJL, OptimizationNLopt
 using JLD2
 
+using JuMP
+using HiGHS
+using DiffOpt
+using ChainRulesCore
+
+using BenchmarkTools
+
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
 include("preprocess.jl") # Data preprocess

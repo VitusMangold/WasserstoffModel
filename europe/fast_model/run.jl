@@ -21,6 +21,7 @@ using BenchmarkTools
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
 include("preprocess.jl") # Data preprocess
+include("costs_jump.jl") # Cost function with jump
 include("config.jl") # Model config used in optimization
 include("optimum.jl") # Function to find the optimum
 

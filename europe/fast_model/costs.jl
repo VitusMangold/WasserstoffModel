@@ -32,13 +32,13 @@ function build_costs(model, capacities)
     ) * model.power_building_costs
 end
 
-function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
+function costs(model::MaxflowModel, capacities, share_ren)
     hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
 
     # This is a thread-safe function if snapshots are disjoint
     function calc_snapshots!(snapshots)
         
-        for snapshot in snapshots
+        Threads.@threads for snapshot in snapshots
             # set_start_end!(mat, model, hypo, snapshot)
             # _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
             _, F = max_flow_lp(capacities, model, hypo, snapshot)
@@ -46,9 +46,7 @@ function costs(model::MaxflowModel, capacities, share_ren, n_chunks=12)
         end
     end
 
-    @floop for part in partition(eachindex(model.hypothetical["DE"]), n_chunks)
-        calc_snapshots!(part)
-    end
+    calc_snapshots!(eachindex(model.hypothetical["DE"]))
 
     gen_renewable_costs = model.power_price_renewable * sum(
         model.total_gen[key] * share_ren[key] * model.time_horizon for key in keys(model.total_gen)

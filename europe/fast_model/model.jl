@@ -1,7 +1,7 @@
 struct MaxflowModel
     ids::Dict{String, Int64}
-    hypothetical::OrderedDict{String, Vector{Float64}}
-    loads::Dict{String, Vector{Float64}}
+    hypothetical::NamedMatrix{Float64, Matrix{Float64}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
+    loads::NamedMatrix{Float64, Matrix{Float64}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
     net_dict::Dict{String, Vector{Float64}} # this is just used as inplace writing buffer
     total_gen::Dict{String, Float64}
     solvers::Vector{GenericModel{Float64}} # keep track of the solvers for derivatives and less init time
@@ -23,10 +23,11 @@ struct MaxflowModel
         power_price_overproduction,
         transport_loss
     )
+    ids = Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(OrderedDict(loads)))]])
         model = new(
-            Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(OrderedDict(loads)))]]),
-            OrderedDict(hypothetical),
-            OrderedDict(loads),
+            ids,
+            net_dict_to_named_array(OrderedDict(hypothetical), ids),
+            net_dict_to_named_array(OrderedDict(loads), ids),
             Dict(key => zeros(length(value)) for (key, value) in loads),
             Dict(key => sum(value) for (key, value) in model_hypothetical),
             GenericModel{Float64}[],
@@ -44,10 +45,10 @@ struct MaxflowModel
 end
 
 function calc_net_flow!(; model, flow_matrix, hypo, snapshot)
-    for key in keys(model.net_dict)
-        generation = hypo[key][snapshot]
-        loading = model.loads[key][snapshot]
-        model.net_dict[key][snapshot] = (
+    for key in axes(model.net_dict, 2)
+        generation = hypo[snapshot, key]
+        loading = model.loads[snapshot, key]
+        model.net_dict[snapshot, key] = (
             (generation - flow_matrix[model.ids["start"], model.ids[key]]) -
             (loading - flow_matrix[model.ids[key], model.ids["end"]])
         )
@@ -60,8 +61,6 @@ end
 
 function dict_to_named_array(dict, ids)
     ordered = deepcopy(OrderedDict([k => OrderedDict(subdict) for (k, subdict) in dict]))
-    push!(ordered, "start" => OrderedDict())
-    push!(ordered, "end" => OrderedDict())
     I = [ids[k] for (k, v) in ordered for _ in keys(v)]
     J = [ids[neighbour] for (_, v) in ordered for neighbour in keys(v)]
     V = [val for (k, v) in ordered for val in values(v)]
@@ -70,26 +69,30 @@ function dict_to_named_array(dict, ids)
         J,
         V
     )
-    names_x = OrderedDict([findfirst(==(v), model.ids) => v for v in axes(mat, 1)])
-    names_y = OrderedDict([findfirst(==(v), model.ids) => v for v in axes(mat, 2)])
+    names_x = OrderedDict([findfirst(==(v), ids) => v for v in axes(mat, 1)])
+    names_y = OrderedDict([findfirst(==(v), ids) => v for v in axes(mat, 2)])
     println(length(keys(names_x)))
     println(length(keys(names_y)))
     println(names_x)
     return NamedArray(mat, (names_x, names_y))
 end
 
-dict_to_named_vector(dict, ids) = NamedArray(
-    collect(values(dict)),
-    (OrderedDict([k => ids[k] for k in keys(dict)]),)
-)
-function net_dict_to_named_array(net_dict, ids)
-    ordered = OrderedDict(net_dict)
-    snapshots = eachindex(last(first(net_dict)))
-    mat = zeros(length(snapshots), length(keys(net_dict)))
-    names_y = collect(keys(net_dict))
-    for (i, name) in enumerate(names_y)
-        mat[:, i] = net_dict[name]
-    end
-    return NamedArray(mat, (snapshots, names_y), ("Rows", "Cols"))
+function dict_to_named_vector(dict, ids)
+    vals = vcat(zeros(2), collect(values(dict)))
+    names = OrderedDict([findfirst(==(v), ids) => v for v in eachindex(vals)])
+    return NamedArray(
+        vals,
+        (names,)
+    )
 end
-net_dict_to_named_array(model.net_dict, model.ids)
+
+function net_dict_to_named_array(net_dict, ids)
+    snapshots = eachindex(last(first(net_dict)))
+    init = zeros(length(snapshots), length(keys(ids)))
+    names = [findfirst(==(v), ids) for v in axes(init, 2)]
+    mat = NamedArray(init, (snapshots, names), ("Rows", "Cols"))
+    for (k, v) in net_dict
+        mat[:, k] = net_dict[k]
+    end
+    return mat
+end

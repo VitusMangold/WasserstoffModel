@@ -1,6 +1,5 @@
 function init_mats(model)
-    n_nodes = length(model.ids)
-    distance_matrix = ones(n_nodes, n_nodes)
+    distance_matrix = zeros(axes(model.distances))
 
     for (country, neighbors) in model.distances
         x = model.ids[country]

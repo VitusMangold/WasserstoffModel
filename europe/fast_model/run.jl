@@ -19,6 +19,9 @@ import MathOptInterface as MOI
 using InferOpt
 using Zygote
 using ChainRulesCore
+using NamedArrays
+using SparseArrays
+using ForwardDiff
 
 using BenchmarkTools
 

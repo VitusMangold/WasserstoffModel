@@ -7,11 +7,16 @@ function elasticities(model, capacities, share_ren)
         model.power_price_conventional,
         model.time_horizon
     ]
+    total_gen=dict_to_named_vector(model.total_gen, model.ids)
+    share_ren=dict_to_named_vector(share_ren, model.ids)
+    net_mat=net_dict_to_named_array(model.net_dict, model.ids) # relevant
+    distances=dict_to_named_array(model.distances, model.ids)
+    capacities=dict_to_named_array(capacities, model.ids) # relevant
     func = y -> return sum_costs(
-        total_gen=model.total_gen,
+        total_gen=total_gen,
         share_ren=share_ren,
-        net_dict=model.net_dict, # relevant
-        distances=model.distances,
+        net_mat=net_mat, # relevant
+        distances=distances,
         capacities=capacities, # relevant
         power_building_costs=y[1],
         p_renewable=y[2],
@@ -19,9 +24,17 @@ function elasticities(model, capacities, share_ren)
         p_conventional=y[4],
         time_horizon=y[5]
     )
-    return ForwardDiff.gradient(func, init) .* init ./ costs(model, capacities, share_ren) # (dy / y) / (dx / x)
+    return func(init)
+    # return ForwardDiff.gradient(func, init) .* init #./ costs(model, capacities, share_ren) # (dy / y) / (dx / x)
     # return Enzyme.autodiff(Forward, func, Active, Duplicated(init, ones(length(init))), init)
     # autodiff(Forward, func, Duplicated, Duplicated(init, zeros(length(init))))
     # Zygote.gradient(func, init) #.* init ./ costs(model, capacities, share_ren) # (dy / y) / (dx / x)
 end
 elasticities(model, cap_all, shares_all)
+dict_to_named_vector(shares_all, model.ids)
+net_dict_to_named_array(model.net_dict, model.ids)[:, "DE"]
+dict_to_named_array(model.distances, model.ids) .* dict_to_named_array(cap_all, model.ids)
+A = dict_to_named_vector(model.total_gen, model.ids)
+dict_to_named_vector(shares_all, model.ids)
+
+typeof(net_dict_to_named_array(Dict(key => value .* shares_all[key] for (key, value) in model.hypothetical), model.ids))

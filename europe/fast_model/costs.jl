@@ -4,7 +4,7 @@ partition(iter, n_chunks) = Iterators.partition(iter, div(length(iter) + n_chunk
 Calculate the net costs for the power imbalance.
 We can never get a negative cost (storage intuition: cannot get paid for storing more than).
 """
-function power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
+function power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
     
     # Helper function to get negative rewards -> positive costs
     neg_reward(total) = -sum(x for x in total if x < 0)
@@ -23,26 +23,23 @@ function power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_
     end
     
     # Sum the net costs across all countries
-    return sum(net_costs(value) for value in values(net_dict))
+    return sum(net_costs(net_mat[:, country]) for country in axes(net_mat, 2))
 end
 
 function build_costs(costs, distances, capacities)
-    sum(
-        v * distances[country][k] for (country, value) in capacities for (k, v) in value
-    ) * costs
+    sum(capacities .* distances) * costs
 end
 
-function sum_costs(; total_gen, net_dict, share_ren, power_building_costs, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
-    gen_renewable_costs = p_renewable * sum(
-        total_gen[key] * share_ren[key] * time_horizon for key in keys(total_gen)
-    )
-    net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
+function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
+    gen_renewable_costs = p_renewable * total_gen' * share_ren * time_horizon
+    net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
     return gen_renewable_costs + net_power_costs + building_costs
 end
 
-function costs(model::MaxflowModel, capacities, share_ren)
-    hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
+ function costs(model::MaxflowModel, capacities, share_ren)
+    # hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
+    hypo = deepcopy(model.hypothetical) .* share_ren'
 
     # This is a thread-safe function if snapshots are disjoint
     function calc_snapshots!(snapshots)
@@ -58,11 +55,11 @@ function costs(model::MaxflowModel, capacities, share_ren)
         end
     end
 
-    calc_snapshots!(eachindex(model.hypothetical["DE"]))
+    calc_snapshots!(axes(model.hypothetical, 1))
 
     return sum_costs(
         total_gen=model.total_gen,
-        net_dict=model.net_dict,
+        net_mat=model.net_dict,
         power_building_costs=model.power_building_costs,
         p_renewable=model.power_price_renewable,
         p_overproduction=model.power_price_overproduction,

@@ -17,7 +17,8 @@ using DiffOpt
 # using ChainRulesCore
 import MathOptInterface as MOI
 using InferOpt
-using FiniteDiff
+using Zygote
+using ChainRulesCore
 
 using BenchmarkTools
 
@@ -42,8 +43,8 @@ results_half_no_cap_fixed = @time find_optimum(model_half, scenario=:no_cap_fixe
 # If you want to save just one, you can simply comment out the others
 jldopen("results.jld2", "a+") do file
 
-    file["model"] = model
-    file["model_half"] = model_half
+    # file["model"] = model
+    # file["model_half"] = model_half
 
     file["results_all"] = results_all
     file["results_same"] = results_same

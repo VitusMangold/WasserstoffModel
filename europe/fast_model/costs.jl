@@ -48,11 +48,12 @@ function costs(model::MaxflowModel, capacities, share_ren)
     function calc_snapshots!(snapshots)
         
         Threads.@threads for snapshot in snapshots
-            F, grad = max_flow_lp(capacities, model, hypo, snapshot)
+            F = max_flow_lp(capacities, model, hypo, snapshot)
             calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
             if snapshot == 1
-                println(F)
-                println(grad)
+                # println(F)
+                # println(grad)
+                # println("Hier")
             end
         end
     end

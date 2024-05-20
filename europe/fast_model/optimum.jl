@@ -50,7 +50,7 @@ function find_optimum(model; scenario, n_chunks=60)
     end
 
     # Define the cost function to be minimized; parameters are redundant for now
-    cost_function = (x, p) -> costs(model, transform(x)..., n_chunks)
+    cost_function = (x, p) -> costs(model, transform(x)...)
 
     lower = [[0.0 for _ in 1:n_leaves]; [0.0 for _ in initial_share]]
     upper = [[100000. for _ in 1:n_leaves]; [3.0 for _ in initial_share]]
@@ -68,7 +68,8 @@ function find_optimum(model; scenario, n_chunks=60)
     )
 
     # Solution
-    results = solve(prob, NLopt.LN_NELDERMEAD(), maxtime=600) # 150s
+    # results = solve(prob, OptimizationOptimJL.BFGS(), maxtime=600) # 150s
+    results = solve(prob, NLopt.LN_NELDERMEAD(), maxtime=3600 * 8) # 9h
     # results = solve(prob, NLopt.LN_COBYLA, maxtime=1200) # ~ 600s stuck in local minimum
     # results = solve(prob, NLopt.LN_BOBYQA, maxtime=1200) # ~ stuck 65s in local minimum
 

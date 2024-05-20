@@ -37,7 +37,6 @@ function create_solver(model, distance_matrix, source, target)
 end
 
 function max_flow_lp(capacities, model, hypo, snapshot)
-    # n_vars = length(keys(model.ids))
     solver = model.solvers[snapshot]
 
     function set!(i, j, c)
@@ -61,21 +60,26 @@ function max_flow_lp(capacities, model, hypo, snapshot)
         end
     end
     JuMP.optimize!(solver)
-    # println(solver)
-    # println(value.(solver[:f]))
     # throw(InterruptException())
     @assert is_solved_and_feasible(solver)
-    # objective_value(solver)
-    val = value.(solver[:f])
+    val = value.(solver[:f])    
 
-    grad = nothing
-    
-    MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], 1.0)
+    return val
+end
+
+function ChainRulesCore.rrule(::typeof(max_flow_lp), model, snapshot)
+    solver = model.solvers[snapshot]
+    for (country, neighbors) in model.dnet_dict
+        x = model.ids[country]
+        for (neighbor, capacity) in neighbors
+            y = model.ids[neighbor]
+            # MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], 1.0)
+        end
+    end
     DiffOpt.reverse_differentiate!(solver)
     obj_exp = MOI.get.(solver, DiffOpt.ReverseConstraintFunction(), solver[:upper])
     grad = JuMP.constant.(obj_exp)
-
-    return val, grad
+    return grad
 end
 
 function near(model, x, y)
@@ -96,26 +100,41 @@ function near(model, x, y)
     return (name_x == "start" != name_y) ⊻ (name_y == "end" != name_x)
 end
 
-# function ChainRulesCore.rrule(::typeof(matrix_relu), y::Matrix{T}) where {T}
-#     model = Model(() -> DiffOpt.diff_optimizer(Ipopt.Optimizer))
-#     pv = matrix_relu(y; model = model)
-#     function pullback_matrix_relu(dl_dx)
-#         # some value from the backpropagation (e.g., loss) is denoted by `l`
-#         # so `dl_dy` is the derivative of `l` wrt `y`
-#         x = model[:x] # load decision variable `x` into scope
-#         dl_dy = zeros(T, size(dl_dx))
-#         dl_dq = zeros(T, size(dl_dx))
-#         # set sensitivities
-#         MOI.set.(model, DiffOpt.ReverseVariablePrimal(), x[:], dl_dx[:])
-#         # compute grad
-#         DiffOpt.reverse_differentiate!(model)
-#         # return gradient wrt objective function parameters
-#         obj_exp = MOI.get(model, DiffOpt.ReverseObjectiveFunction())
-#         # coeff of `x` in q'x = -2y'x
-#         dl_dq[:] .= JuMP.coefficient.(obj_exp, x[:])
-#         dq_dy = -2 # dq/dy = -2
-#         dl_dy[:] .= dl_dq[:] * dq_dy
-#         return (ChainRulesCore.NoTangent(), dl_dy)
-#     end
-#     return pv, pullback_matrix_relu
-# end
+function ChainRulesCore.rrule(::typeof(costs), cap::OrderedDict, shares::OrderedDict)
+    function pullback_flow(dcosts_dnet)
+
+    end
+    Threads.@threads for snapshot in snapshots
+        F, grad = max_flow_lp(capacities, model, hypo, snapshot)
+        calc_net_flow!(model=model, flow_matrix=F, hypo=hypo, snapshot=snapshot)
+        if snapshot == 1
+            # println(F)
+            # println(grad)
+            println("Hier")
+        end
+    end
+end
+
+function ChainRulesCore.rrule(::typeof(costs), cap::OrderedDict, shares::OrderedDict)
+    model = Model(() -> DiffOpt.diff_optimizer(Ipopt.Optimizer))
+    pv = matrix_relu(y; model = model)
+    function pullback_matrix_relu(dl_dx)
+        # some value from the backpropagation (e.g., loss) is denoted by `l`
+        # so `dl_dy` is the derivative of `l` wrt `y`
+        x = model[:x] # load decision variable `x` into scope
+        dl_dy = zeros(T, size(dl_dx))
+        dl_dq = zeros(T, size(dl_dx))
+        # set sensitivities
+        MOI.set.(model, DiffOpt.ReverseVariablePrimal(), x[:], dl_dx[:])
+        # compute grad
+        DiffOpt.reverse_differentiate!(model)
+        # return gradient wrt objective function parameters
+        obj_exp = MOI.get(model, DiffOpt.ReverseObjectiveFunction())
+        # coeff of `x` in q'x = -2y'x
+        dl_dq[:] .= JuMP.coefficient.(obj_exp, x[:])
+        dq_dy = -2 # dq/dy = -2
+        dl_dy[:] .= dl_dq[:] * dq_dy
+        return (ChainRulesCore.NoTangent(), dl_dy)
+    end
+    return pv, pullback_matrix_relu
+end

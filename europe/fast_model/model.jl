@@ -77,5 +77,19 @@ function dict_to_named_array(dict, ids)
     println(names_x)
     return NamedArray(mat, (names_x, names_y))
 end
-A = dict_to_named_array(model.distances, model.ids)
-# NamedArray(A, (OrderedDict(ids), OrderedDict(ids)))
+
+dict_to_named_vector(dict, ids) = NamedArray(
+    collect(values(dict)),
+    (OrderedDict([k => ids[k] for k in keys(dict)]),)
+)
+function net_dict_to_named_array(net_dict, ids)
+    ordered = OrderedDict(net_dict)
+    snapshots = eachindex(last(first(net_dict)))
+    mat = zeros(length(snapshots), length(keys(net_dict)))
+    names_y = collect(keys(net_dict))
+    for (i, name) in enumerate(names_y)
+        mat[:, i] = net_dict[name]
+    end
+    return NamedArray(mat, (snapshots, names_y), ("Rows", "Cols"))
+end
+net_dict_to_named_array(model.net_dict, model.ids)

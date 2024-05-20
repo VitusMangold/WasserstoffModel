@@ -24,12 +24,12 @@ end
 function create_solver(model, distance_matrix, source, target)
     # solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "log_to_console" => false)))
     solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
+    # solver = Model(HiGHS.Optimizer)
     set_silent(solver)
     n = size(distance_matrix, 1)
     @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
     @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= 1000000)
     # Capacity constraints are modified in the max_flow_lp function; right now we set all to 0.0
-    # @constraint(solver, f[1:n, 1:n] .<= 0)
     # Flow conservation constraints
     @constraint(solver, [i = 1:n; i != source && i != target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
     @objective(solver, Max, sum(f[:, 2]))
@@ -41,7 +41,8 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     solver = model.solvers[snapshot]
 
     function set!(i, j, c)
-        set_upper_bound(solver[:f][i, j], c)
+        # set_upper_bound(solver[:f][i, j], c)
+        set_normalized_rhs(solver[:upper][i, j], c)
     end
 
     for key in keys(model.net_dict)
@@ -64,14 +65,15 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     # println(value.(solver[:f]))
     # throw(InterruptException())
     @assert is_solved_and_feasible(solver)
-    objective_value(solver)
+    # objective_value(solver)
     val = value.(solver[:f])
-    
+
     grad = nothing
-    # grad = MOI.set.(solver, DiffOpt.ReverseConstraintFunction(), solver[:f], 1.0) # Containers.@container([i = 1:n_vars, j = 1:n_vars; near(model, i, j)], 1.0))
-    # DiffOpt.reverse_differentiate!(solver)
-    # obj_exp = MOI.get(solver, DiffOpt.ReverseConstraintFunction())
-    # grad = JuMP.coefficient.(obj_exp, solver[:f])
+    
+    MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], 1.0)
+    DiffOpt.reverse_differentiate!(solver)
+    obj_exp = MOI.get.(solver, DiffOpt.ReverseConstraintFunction(), solver[:upper])
+    grad = JuMP.constant.(obj_exp)
 
     return val, grad
 end

@@ -4,9 +4,11 @@ using Graphs
 using GraphsFlows
 using JLD2
 using Plots
+using ForwardDiff
 
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
+include("elasticities.jl") # Elasticities
 
 model = load("results.jld2", "model")
 cap_all, shares_all = load("results.jld2", "results_all")

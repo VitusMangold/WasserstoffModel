@@ -14,7 +14,10 @@ using JLD2
 using JuMP
 using HiGHS
 using DiffOpt
-using ChainRulesCore
+# using ChainRulesCore
+import MathOptInterface as MOI
+using InferOpt
+using FiniteDiff
 
 using BenchmarkTools
 

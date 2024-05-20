@@ -57,3 +57,25 @@ end
 function count_leaves(nested_dict)
     return sum(length(sub_dict) for sub_dict in values(nested_dict))
 end
+
+function dict_to_named_array(dict, ids)
+    ordered = deepcopy(OrderedDict([k => OrderedDict(subdict) for (k, subdict) in dict]))
+    push!(ordered, "start" => OrderedDict())
+    push!(ordered, "end" => OrderedDict())
+    I = [ids[k] for (k, v) in ordered for _ in keys(v)]
+    J = [ids[neighbour] for (_, v) in ordered for neighbour in keys(v)]
+    V = [val for (k, v) in ordered for val in values(v)]
+    mat = sparse(
+        I,
+        J,
+        V
+    )
+    names_x = OrderedDict([findfirst(==(v), model.ids) => v for v in axes(mat, 1)])
+    names_y = OrderedDict([findfirst(==(v), model.ids) => v for v in axes(mat, 2)])
+    println(length(keys(names_x)))
+    println(length(keys(names_y)))
+    println(names_x)
+    return NamedArray(mat, (names_x, names_y))
+end
+A = dict_to_named_array(model.distances, model.ids)
+# NamedArray(A, (OrderedDict(ids), OrderedDict(ids)))

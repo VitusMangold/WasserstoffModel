@@ -4,7 +4,7 @@ partition(iter, n_chunks) = Iterators.partition(iter, div(length(iter) + n_chunk
 Calculate the net costs for the power imbalance.
 We can never get a negative cost (storage intuition: cannot get paid for storing more than).
 """
-function power_imbalance_costs(model)
+function power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
     
     # Helper function to get negative rewards -> positive costs
     neg_reward(total) = -sum(x for x in total if x < 0)
@@ -15,21 +15,30 @@ function power_imbalance_costs(model)
     # Calculate net costs for one country's time series
     function net_costs(value)
         cost = max(
-            pos_reward(value) * model.power_price_overproduction +
-                neg_reward(value) * model.power_price_conventional,
+            pos_reward(value) * p_overproduction +
+                neg_reward(value) * p_conventional,
             0.0
         )
-        return cost * model.time_horizon
+        return cost * time_horizon
     end
     
     # Sum the net costs across all countries
-    return sum(net_costs(value) for value in values(model.net_dict))
+    return sum(net_costs(value) for value in values(net_dict))
 end
 
-function build_costs(model, capacities)
+function build_costs(costs, distances, capacities)
     sum(
-        v * model.distances[country][k] for (country, value) in capacities for (k, v) in value
-    ) * model.power_building_costs
+        v * distances[country][k] for (country, value) in capacities for (k, v) in value
+    ) * costs
+end
+
+function sum_costs(; total_gen, net_dict, share_ren, power_building_costs, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
+    gen_renewable_costs = p_renewable * sum(
+        total_gen[key] * share_ren[key] * time_horizon for key in keys(total_gen)
+    )
+    net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
+    building_costs = build_costs(power_building_costs, distances, capacities)
+    return gen_renewable_costs + net_power_costs + building_costs
 end
 
 function costs(model::MaxflowModel, capacities, share_ren)
@@ -50,11 +59,16 @@ function costs(model::MaxflowModel, capacities, share_ren)
 
     calc_snapshots!(eachindex(model.hypothetical["DE"]))
 
-    gen_renewable_costs = model.power_price_renewable * sum(
-        model.total_gen[key] * share_ren[key] * model.time_horizon for key in keys(model.total_gen)
+    return sum_costs(
+        total_gen=model.total_gen,
+        net_dict=model.net_dict,
+        power_building_costs=model.power_building_costs,
+        p_renewable=model.power_price_renewable,
+        p_overproduction=model.power_price_overproduction,
+        p_conventional=model.power_price_conventional,
+        distances=model.distances,
+        time_horizon=model.time_horizon,
+        share_ren=share_ren,
+        capacities=capacities
     )
-    net_power_costs = power_imbalance_costs(model)
-    building_costs = build_costs(model, capacities)
-
-    return gen_renewable_costs + net_power_costs + building_costs
 end

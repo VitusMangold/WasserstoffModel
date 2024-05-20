@@ -27,6 +27,7 @@ function create_solver(model, distance_matrix, source, target)
     set_silent(solver)
     n = size(distance_matrix, 1)
     @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
+    @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= 1000000)
     # Capacity constraints are modified in the max_flow_lp function; right now we set all to 0.0
     # @constraint(solver, f[1:n, 1:n] .<= 0)
     # Flow conservation constraints
@@ -36,12 +37,11 @@ function create_solver(model, distance_matrix, source, target)
 end
 
 function max_flow_lp(capacities, model, hypo, snapshot)
-    n_vars = length(keys(model.ids))
+    # n_vars = length(keys(model.ids))
     solver = model.solvers[snapshot]
 
     function set!(i, j, c)
         set_upper_bound(solver[:f][i, j], c)
-        DiffOpt.Parameter(c)
     end
 
     for key in keys(model.net_dict)
@@ -66,14 +66,13 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     @assert is_solved_and_feasible(solver)
     objective_value(solver)
     val = value.(solver[:f])
-    # println(typeof(solver[:f]))
-    # vect = MOI.get.(solver, MOI.VariablePrimal(), solver[:f])
-    # func = MOI.get(solver, DiffOpt.ReverseObjectiveFunction())
-    # grad = JuMP.coefficient(func, solver[:f])
-    grad = MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], -1.0) # Containers.@container([i = 1:n_vars, j = 1:n_vars; near(model, i, j)], 1.0))
-    DiffOpt.reverse_differentiate!(solver)
-    obj_exp = MOI.get(solver, DiffOpt.ReverseObjectiveFunction())
-    grad = JuMP.coefficient.(obj_exp, solver[:f])
+    
+    grad = nothing
+    # grad = MOI.set.(solver, DiffOpt.ReverseConstraintFunction(), solver[:f], 1.0) # Containers.@container([i = 1:n_vars, j = 1:n_vars; near(model, i, j)], 1.0))
+    # DiffOpt.reverse_differentiate!(solver)
+    # obj_exp = MOI.get(solver, DiffOpt.ReverseConstraintFunction())
+    # grad = JuMP.coefficient.(obj_exp, solver[:f])
+
     return val, grad
 end
 

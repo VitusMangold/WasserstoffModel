@@ -26,3 +26,4 @@ function elasticities(model, capacities, share_ren)
 end
 elasticities(model, cap_all, shares_all)
 costs(model, cap_all, shares_all)
+costs(model, cap_same, shares_same)

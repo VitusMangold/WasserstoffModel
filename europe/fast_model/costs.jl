@@ -13,17 +13,14 @@ function power_imbalance_costs(model)
     pos_reward(total) = -sum(x for x in total if x >= 0)
     
     # Calculate net costs for one country's time series
-    function net_costs(value)
-        cost = max(
-            pos_reward(value) * model.power_price_overproduction +
-                neg_reward(value) * model.power_price_conventional,
-            0.0
-        )
+    function net_costs(value) # DE: +10, FR: -10
+        cost = pos_reward(value) * model.power_price_overproduction +
+                neg_reward(value) * model.power_price_conventional
         return cost * model.time_horizon
     end
     
     # Sum the net costs across all countries
-    return sum(net_costs(value) for value in values(model.net_dict))
+    return max(sum(net_costs(value) for value in values(model.net_dict)), 0.0)
 end
 
 function build_costs(model, capacities)

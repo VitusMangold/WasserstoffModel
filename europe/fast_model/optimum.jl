@@ -68,7 +68,7 @@ function find_optimum(model; scenario, n_chunks=60)
     )
 
     # Solution
-    results = solve(prob, NLopt.LN_NELDERMEAD(), maxtime=600) # 150s
+    results = solve(prob, NLopt.LN_NELDERMEAD(), maxtime=1200) # 150s
     # results = solve(prob, NLopt.LN_COBYLA, maxtime=1200) # ~ 600s stuck in local minimum
     # results = solve(prob, NLopt.LN_BOBYQA, maxtime=1200) # ~ stuck 65s in local minimum
 

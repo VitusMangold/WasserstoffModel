@@ -25,5 +25,6 @@ function elasticities(model, capacities, share_ren)
     # Zygote.gradient(func, init) #.* init ./ costs(model, capacities, share_ren) # (dy / y) / (dx / x)
 end
 elasticities(model, cap_all, shares_all)
-costs(model, cap_all, shares_all)
-costs(model, cap_same, shares_same)
+a = costs(model, cap_all, shares_all)
+b = costs(model, cap_same, shares_same)
+b / a

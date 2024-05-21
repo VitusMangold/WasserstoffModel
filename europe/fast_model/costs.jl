@@ -38,6 +38,9 @@ function sum_costs(; total_gen, net_dict, share_ren, power_building_costs, p_ren
     )
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
+    println("gen_renewable_costs: ", gen_renewable_costs)
+    println("net_power_costs: ", net_power_costs)
+    println("building_costs: ", building_costs)
     return gen_renewable_costs + net_power_costs + building_costs
 end
 

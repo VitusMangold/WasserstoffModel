@@ -3,10 +3,10 @@ using FLoops
 using Graphs
 using GraphsFlows
 using JLD2
-using Plots
 using PGFPlotsX
 using PrettyTables
 using LaTeXStrings
+using StatsPlots
 
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
@@ -44,11 +44,11 @@ pretty_table(
 
 gain = costs(model, cap_no_cap, shares_no_cap) - costs(model, cap_all, shares_all)
 bc = build_costs(model, cap_all)
-roi = gain / bc
+roi = (gain + bc) / bc
 
 gain_half = costs(model_half, cap_half_no_cap, shares_half_no_cap) - costs(model_half, cap_half_all, shares_half_all)
 bc_half = build_costs(model_half, cap_half_all)
-roi_half = gain_half / bc_half
+roi_half = (gain_half + bc_half) / bc_half
 
 pretty_table(
     [
@@ -86,14 +86,14 @@ calc_snapshots!(1, model, cap_all, shares_all)
 calc_snapshots!(4380, model, cap_all, shares_all)
 
 pgfplotsx()
-plot_shares(shares_all);
+plot_shares(shares_all, shares_no_cap, ["Optimization (all)", "Optimization (without capacities)"])
 savefig("optimal_shares.pdf")
 
 plot_country(model, shares_all, "DE");
 savefig("de_optimized.pdf")
 
-plot_country(model, shares_nothing, "DE");
-savefig("de_nothing.pdf")
+# plot_country(model, shares_nothing, "DE");
+# savefig("de_nothing.pdf")
 
 # plot(model_loads["DE"][1:(31*24)]);
 # plot!(model_hypothetical["DE"][1:(31*24)])

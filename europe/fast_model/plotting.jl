@@ -1,6 +1,11 @@
-function plot_shares(sol_shares)
-    lab = collect(keys(sol_shares))
-    bar([sol_shares[key] for key in lab], xticks = (eachindex(lab), lab), legend=false, title="Optimal share of renewable energy")
+function plot_shares(shares1, shares2, label)
+    lab = [first(pair) for pair in sort(collect(pairs(shares_all)), by=x->x[2], rev=true)]
+    groupedbar(
+        vcat([shares1[key] for key in lab], [shares2[key] for key in lab]),
+        xticks = (eachindex(lab), lab),
+        group=vcat(fill(label[1], length(lab)), fill(label[2], length(lab))),
+        title="Optimal share of renewable energy"
+    )
 end
 
 function plot_country(model, sol_shares, country)

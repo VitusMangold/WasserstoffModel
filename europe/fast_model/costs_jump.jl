@@ -1,11 +1,12 @@
-function init_mats(model)
-    distance_matrix = zeros(axes(model.distances))
+function init_mats(model, dist_dict)
+    n_countries = count_leaves(dist_dict) + 2
+    distance_matrix = zeros(n_countries, n_countries)
 
-    for (country, neighbors) in model.distances
+    for (country, neighbors) in dist_dict
         x = model.ids[country]
         for neighbor in keys(neighbors)
             y = model.ids[neighbor]
-            factor = 1 / ((1 - model.transport_loss)^model.distances[country][neighbor])
+            factor = 1 / ((1 - model.transport_loss)^dist_dict[country][neighbor])
             distance_matrix[x, y] = factor
             distance_matrix[y, x] = factor
         end
@@ -14,9 +15,9 @@ function init_mats(model)
     return distance_matrix
 end
 
-function init_all_solvers!(model)
-    dist_mat = init_mats(model)
-    solvers = [create_solver(model, dist_mat, 1, 2) for _ in eachindex(model.loads["DE"])]
+function init_all_solvers!(model, distances)
+    dist_mat = init_mats(model, distances)
+    solvers = [create_solver(model, dist_mat, 1, 2) for _ in axes(model.loads, 1)]
     append!(model.solvers, solvers)
 end
 

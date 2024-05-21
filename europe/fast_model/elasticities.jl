@@ -7,16 +7,13 @@ function elasticities(model, capacities, share_ren)
         model.power_price_conventional,
         model.time_horizon
     ]
-    total_gen=dict_to_named_vector(model.total_gen, model.ids)
     share_ren=dict_to_named_vector(share_ren, model.ids)
-    net_mat=net_dict_to_named_array(model.net_dict, model.ids) # relevant
-    distances=dict_to_named_array(model.distances, model.ids)
     capacities=dict_to_named_array(capacities, model.ids) # relevant
     func = y -> return sum_costs(
-        total_gen=total_gen,
+        total_gen=model.total_gen,
         share_ren=share_ren,
-        net_mat=net_mat, # relevant
-        distances=distances,
+        net_mat=model.net_mat, # relevant
+        distances=model.distances,
         capacities=capacities, # relevant
         power_building_costs=y[1],
         p_renewable=y[2],

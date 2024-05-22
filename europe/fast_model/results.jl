@@ -44,6 +44,8 @@ pretty_table(
     backend = Val(:latex)
 )
 
+build_costs(model, cap) = build_costs(model.power_building_costs, model.distances, cap)
+
 gain = costs(model, cap_no_cap, shares_no_cap) - costs(model, cap_all, shares_all)
 bc = build_costs(model, cap_all)
 roi = (gain + bc) / bc
@@ -85,7 +87,7 @@ function calc_snapshots!(snapshot, model, capacities, share_ren)
 end
 
 calc_snapshots!(1, model, cap_all, shares_all)
-calc_snapshots!(4380, model, cap_all, shares_all)
+calc_snapshots!(32, model, cap_all, shares_all)
 
 pgfplotsx()
 plot_shares(shares_all, shares_no_cap, ["Optimization (all)", "Optimization (without capacities)"])
@@ -97,4 +99,30 @@ savefig("de_optimized.pdf")
 plot_country(model, shares_nothing, "DE");
 savefig("de_nothing.pdf")
 
-elasticities(model, cap_all, shares_all)
+pretty_table(
+    [
+        ["Building costs", "Power price renewable", "Power price overproduction", "Power price conventional", "Time horizon"] elasticities(model, cap_all, shares_all)
+    ],
+    header=["Parameter", "Cost elasticity"], backend = Val(:latex)
+)
+
+# Tatsächliche Energiekosten: Gesamtkosten durch (Anzahl der Stunden pro Jahr * Gesamterzeugung * Zeithorizont)
+actual(model, cap, share) = costs(model, cap, share) / (sum(model.total_gen[key] * val for (key, val) in share) * 365 * 24 * model.time_horizon) * mw_to_kw
+actual(model, cap_all, shares_all)
+
+pretty_table(
+    [
+        [
+            "All", "Same", "Fixed", "Nothing", "No Cap", "No Cap Same"
+        ] [
+            costs(model, cap_all, shares_all),
+            costs(model, cap_same, shares_same),
+            costs(model, cap_fixed, shares_fixed),
+            costs(model, cap_nothing, shares_nothing),
+            costs(model, cap_no_cap, shares_no_cap),
+            costs(model, cap_no_cap_same, shares_no_cap_same)
+        ]
+    ],
+    header = ["Scenario", "Costs in € per kWh"],
+    backend = Val(:latex)
+)

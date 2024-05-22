@@ -19,6 +19,7 @@ import MathOptInterface as MOI
 using InferOpt
 using Zygote
 using ChainRulesCore
+import MultiObjectiveAlgorithms as MOA
 
 using BenchmarkTools
 

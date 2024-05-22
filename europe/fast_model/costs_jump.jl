@@ -22,7 +22,8 @@ function init_all_solvers!(model)
 end
 
 function create_solver(model, distance_matrix, source, target)
-    solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "off")))
+    solver = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
+    # solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "off")))
     # solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
     # solver = Model(HiGHS.Optimizer)
     set_silent(solver)
@@ -35,7 +36,9 @@ function create_solver(model, distance_matrix, source, target)
     @constraint(solver, [i = 1:n; i != source && i != target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
     # Additional constraint: Satisfy own needs first (compare: add f[i, target] on both sides)
     # @constraint(solver, own[i = 1:n; i != source && i != target], sum(f[:, i]) - sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j) && j != target) >= magic_number)
-    @objective(solver, Max, sum(f[:, 2]))
+    @objective(solver, Max, [sum(f[:, 2]), -sum(f[1, :])])
+    set_attribute(solver, MOA.Algorithm(), MOA.Hierarchical())
+    set_attribute.(solver, MOA.ObjectivePriority.(1:2), [2, 1])
     return solver
 end
 

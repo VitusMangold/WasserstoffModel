@@ -1,16 +1,17 @@
 partition(iter, n_chunks) = Iterators.partition(iter, div(length(iter) + n_chunks - 1, n_chunks))
 
+    
+# Helper function to get negative rewards -> positive costs
+neg_reward(total) = -sum(x for x in total if x < 0)
+
+# Helper function to get positive rewards -> negative costs
+pos_reward(total) = -sum(x for x in total if x >= 0)
+
 """
 Calculate the net costs for the power imbalance.
 We can never get a negative cost (storage intuition: cannot get paid for storing more than).
 """
 function power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
-    
-    # Helper function to get negative rewards -> positive costs
-    neg_reward(total) = -sum(x for x in total if x < 0)
-    
-    # Helper function to get positive rewards -> negative costs
-    pos_reward(total) = -sum(x for x in total if x >= 0)
     
     # Calculate net costs for one country's time series
     function net_costs(value) # DE: +10, FR: -10
@@ -35,6 +36,9 @@ function sum_costs(; total_gen, net_dict, share_ren, power_building_costs, p_ren
     ) * time_horizon
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_dict, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
+    println("gen_renewable_costs: ", gen_renewable_costs)
+    println("net_power_costs: ", net_power_costs)
+    println("building_costs: ", building_costs)
     return gen_renewable_costs + net_power_costs + building_costs
 end
 

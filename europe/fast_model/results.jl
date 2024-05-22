@@ -8,6 +8,7 @@ using PrettyTables
 using LaTeXStrings
 using StatsPlots
 using ForwardDiff
+using Dates
 
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
@@ -86,17 +87,19 @@ function calc_snapshots!(snapshot, model, capacities, share_ren)
     return flows_dict
 end
 
+times = DateTime("2023-01-01T00:00:00"):Hour(1):DateTime("2023-12-31T23:00:00")
+times[1]
 calc_snapshots!(1, model, cap_all, shares_all)
-calc_snapshots!(32, model, cap_all, shares_all)
+calc_snapshots!(6666, model, cap_all, shares_all)
 
 pgfplotsx()
 plot_shares(shares_all, shares_no_cap, ["Optimization (all)", "Optimization (without capacities)"])
 savefig("optimal_shares.pdf")
 
-plot_country(model, shares_all, "DE");
+plot_country(model, shares_all, "DE", times, true)
 savefig("de_optimized.pdf")
 
-plot_country(model, shares_nothing, "DE");
+plot_country(model, shares_nothing, "DE", times)
 savefig("de_nothing.pdf")
 
 pretty_table(
@@ -107,22 +110,78 @@ pretty_table(
 )
 
 # Tatsächliche Energiekosten: Gesamtkosten durch (Anzahl der Stunden pro Jahr * Gesamterzeugung * Zeithorizont)
-actual(model, cap, share) = costs(model, cap, share) / (sum(model.total_gen[key] * val for (key, val) in share) * 365 * 24 * model.time_horizon) * mw_to_kw
+# # Hätte ich Leistung von 1kW: Im Jahr 1kW * 365 * 24
+# actual(model, cap, share) = costs(model, cap, share) / (sum(sum(model.loads[key]) for (key, val) in share) * model.time_horizon * mw_to_kw)
+actual(model, cap, share) = costs(model, cap, share) / (sum(model.total_gen[key] * val + pos_reward(model.net_dict[key]) * 0.5 - neg_reward(model.net_dict[key]) for (key, val) in share) * model.time_horizon * mw_to_kw)
+
 actual(model, cap_all, shares_all)
+actual(model, cap_no_cap, shares_no_cap)
+actual(model_half, cap_half_all, shares_half_all)
+
+costs(model, cap_all, shares_all)
+costs(model, cap_no_cap, shares_no_cap)
+costs(model_half, cap_half_all, shares_half_all)
 
 pretty_table(
     [
         [
-            "All", "Same", "Fixed", "Nothing", "No Cap", "No Cap Same"
+            "All", "Same", "Fixed", "Nothing", "No Cap", "No Cap Same", "Half All"
         ] [
             costs(model, cap_all, shares_all),
             costs(model, cap_same, shares_same),
             costs(model, cap_fixed, shares_fixed),
             costs(model, cap_nothing, shares_nothing),
             costs(model, cap_no_cap, shares_no_cap),
-            costs(model, cap_no_cap_same, shares_no_cap_same)
+            costs(model, cap_no_cap_same, shares_no_cap_same),
+            costs(model_half, cap_half_all, shares_half_all)
         ]
     ],
     header = ["Scenario", "Costs in € per kWh"],
-    backend = Val(:latex)
+    # backend = Val(:latex)
 )
+
+pretty_table(
+    [
+        [
+            "All", "Same", "Fixed", "Nothing", "No Cap", "No Cap Same", "Half All"
+        ] [
+            actual(model, cap_all, shares_all),
+            actual(model, cap_same, shares_same),
+            actual(model, cap_fixed, shares_fixed),
+            actual(model, cap_nothing, shares_nothing),
+            actual(model, cap_no_cap, shares_no_cap),
+            actual(model, cap_no_cap_same, shares_no_cap_same),
+            actual(model_half, cap_half_all, shares_half_all)
+        ]
+    ],
+    header = ["Scenario", "Costs in € per kWh"],
+    # backend = Val(:latex)
+)
+
+function edge_snapshots(snapshots, model, capacities, share_ren, times, name, from, to)
+    hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
+
+    graph, mat = init_graph(model, capacities)
+
+    edge_DE_FR = zeros(length(snapshots))
+
+    for (i, snapshot) in enumerate(snapshots)
+
+        set_start_end!(mat, model, hypo, snapshot)
+        _, F = maximum_flow(graph, model.ids["start"], model.ids["end"], mat, DinicAlgorithm())
+        edge_DE_FR[i] = F[from, to]
+    end
+    ticks=1:24:(length(snapshots) + 1)
+    p = plot(
+        edge_DE_FR,
+        title="Flow edge from $name",
+        label=false,
+        xticks=(ticks, Dates.format.(times[ticks], "dd")),
+    )
+    savefig("Edge $name.pdf")
+    return p
+end
+
+# Snapshot Kante: Zwei Wochen
+edge_snapshots(1:(14*24), model, cap_all, shares_all, times, "DE to FR", 6, 7)
+edge_snapshots(1:(14*24), model, cap_all, shares_all, times, "DE to DK", 6, 14)

@@ -8,12 +8,28 @@ function plot_shares(shares1, shares2, label)
     )
 end
 
-function plot_country(model, sol_shares, country)
+function plot_country(model, sol_shares, country, times, compare=false)
     hypo = model.hypothetical[country] * sol_shares[country]
     loads = model.loads[country]
     net = hypo - loads
-    plot(hypo, label="Optimized generation");
-    plot!(-loads, label="Power consumption")
-    plot!(net, label="Net generation")
-    title!("Generation and consumption for $(country)")
+    if compare
+        plot(model.hypothetical[country], label="Erzeugung");
+        plot!(-loads, label="Verbrauch")
+        plot!(model.hypothetical[country] - loads, label="Nettoerzeugung")
+        plot!(hypo, label="Optimierte Erzeugung")
+        plot!(net, label="Optimierte Nettoerzeugung")
+        xlims!(false, 24*14)
+        tick_lab = collect(times[begin]:Day(1):times[end])
+        tick = [findfirst(x-> x == month, times) for month in tick_lab]
+        xticks!(tick, Dates.format.(tick_lab, "dd.mm."), xrotation=45)
+        title!("Optimierte Energieerzeugung und -verbrauch für $(country)")
+    else
+        plot(model.hypothetical[country], label="Erzeugung");
+        plot!(-loads, label="Verbrauch")
+        plot!(model.hypothetical[country] - loads, label="Nettoerzeugung")
+        tick_lab = collect(times[begin]:Month(1):times[end])
+        tick = [findfirst(x-> x == month, times) for month in tick_lab]
+        xticks!(tick, Dates.format.(tick_lab, "dd.mm."), xrotation=45)
+        title!("Energieerzeugung und -verbrauch für $(country)")
+    end
 end

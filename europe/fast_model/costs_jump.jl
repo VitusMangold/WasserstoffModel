@@ -22,16 +22,19 @@ function init_all_solvers!(model)
 end
 
 function create_solver(model, distance_matrix, source, target)
-    # solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "log_to_console" => false)))
-    solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
+    solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "off")))
+    # solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
     # solver = Model(HiGHS.Optimizer)
     set_silent(solver)
     n = size(distance_matrix, 1)
     @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
-    @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= 1000000)
+    magic_number = 1000000
+    @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= magic_number)
     # Capacity constraints are modified in the max_flow_lp function; right now we set all to 0.0
-    # Flow conservation constraints
+    # Flow conservation constraints with losses
     @constraint(solver, [i = 1:n; i != source && i != target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
+    # Additional constraint: Satisfy own needs first (compare: add f[i, target] on both sides)
+    # @constraint(solver, own[i = 1:n; i != source && i != target], sum(f[:, i]) - sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j) && j != target) >= magic_number)
     @objective(solver, Max, sum(f[:, 2]))
     return solver
 end
@@ -40,7 +43,6 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     solver = model.solvers[snapshot]
 
     function set!(i, j, c)
-        # set_upper_bound(solver[:f][i, j], c)
         set_normalized_rhs(solver[:upper][i, j], c)
     end
 
@@ -49,6 +51,7 @@ function max_flow_lp(capacities, model, hypo, snapshot)
         loading = model.loads[key][snapshot]
         set!(model.ids["start"], model.ids[key], generation)
         set!(model.ids[key], model.ids["end"], loading)
+        # set_normalized_rhs(solver[:own][model.ids[key]], loading)
     end
 
     for (country, neighbors) in capacities

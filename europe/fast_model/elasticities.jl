@@ -26,5 +26,7 @@ function elasticities(model, capacities, share_ren)
 end
 elasticities(model, cap_all, shares_all)
 a = costs(model, cap_all, shares_all)
+test(x)
 b = costs(model, cap_same, shares_same)
 b / a
+old_net_dict["DE"] .== model.net_dict["DE"]

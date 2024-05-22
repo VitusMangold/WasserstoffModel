@@ -24,7 +24,8 @@ model = MaxflowModel(
     power_price_conventional = 0.20 * mw_to_kw, # in Euro/mWh
     power_price_renewable = 0.07 * mw_to_kw, # in Euro/mWh
     power_price_overproduction = 0.10 * mw_to_kw, # in Euro/mWh
-    transport_loss = 0.02 * 1e-3, # per km, Leckagen, Reibungsverluste, Permeation, Kompressionsverluste
+    transport_loss = 0.05 * 1e-2, # per km, selbst bei H2 hat man Leckagen, Reibungsverluste, Permeation, Kompressionsverluste
+    # ursprünglich 0.02
 )
 
 model_half = MaxflowModel(
@@ -36,5 +37,6 @@ model_half = MaxflowModel(
     power_price_conventional = 0.20 * mw_to_kw, # in Euro/mWh
     power_price_renewable = 0.07 * mw_to_kw, # in Euro/mWh
     power_price_overproduction = 0.10 * mw_to_kw, # in Euro/mWh
-    transport_loss = 0.02 * 1e-3, # per km, Leckagen, Reibungsverluste, Permeation, Kompressionsverluste
+    transport_loss = 0.05 * 1e-2, # per km, selbst bei H2 hat man Leckagen, Reibungsverluste, Permeation, Kompressionsverluste
+    # ursprünglich 0.02
 )

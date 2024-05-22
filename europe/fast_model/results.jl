@@ -7,10 +7,12 @@ using PGFPlotsX
 using PrettyTables
 using LaTeXStrings
 using StatsPlots
+using ForwardDiff
 
 include("model.jl") # Model definition and helper functions
 include("costs.jl") # Cost function
 include("plotting.jl")
+include("elasticities.jl")
 
 model = load("results.jld2", "model")
 model_half = load("results.jld2", "model_half")
@@ -92,8 +94,7 @@ savefig("optimal_shares.pdf")
 plot_country(model, shares_all, "DE");
 savefig("de_optimized.pdf")
 
-# plot_country(model, shares_nothing, "DE");
-# savefig("de_nothing.pdf")
+plot_country(model, shares_nothing, "DE");
+savefig("de_nothing.pdf")
 
-# plot(model_loads["DE"][1:(31*24)]);
-# plot!(model_hypothetical["DE"][1:(31*24)])
+elasticities(model, cap_all, shares_all)

@@ -129,6 +129,3 @@ function calc_loads_ren(gens, loads, renewables, freq=Hour(1))
 end
 
 model_loads, model_hypothetical = calc_loads_ren(gens, loads, renewables)
-
-# Sanity check
-[key => length(value) for (key, value) in model_hypothetical]

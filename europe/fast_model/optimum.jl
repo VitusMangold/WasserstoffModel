@@ -1,10 +1,10 @@
 function find_optimum(model; scenario, n_chunks=60)
 
-    n_leaves = count_leaves(model.distances)
+    n_leaves = count_leaves(model.config.distances)
 
     initial_cap = Dict(
         key => Dict(neighbor => 100.0 for neighbor in keys(value))
-        for (key, value) in model.distances
+        for (key, value) in model.config.distances
     )
     initial_share = Dict(key => 1.0 for key in keys(model.hypothetical))
 
@@ -14,7 +14,7 @@ function find_optimum(model; scenario, n_chunks=60)
     function transform(input)
         x = expand(input)
         next = iterate(x)
-        for (key, value) in model.distances
+        for (key, value) in model.config.distances
             for neighbor in keys(value)
                 (val, state) = next
                 initial_cap[key][neighbor] = val

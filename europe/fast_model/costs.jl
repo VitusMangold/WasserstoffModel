@@ -60,12 +60,12 @@ end
     return sum_costs(
         total_gen=model.total_gen,
         net_mat=model.net_mat,
-        power_building_costs=model.power_building_costs,
-        p_renewable=model.power_price_renewable,
-        p_overproduction=model.power_price_overproduction,
-        p_conventional=model.power_price_conventional,
-        distances=model.distances,
-        time_horizon=model.time_horizon,
+        power_building_costs=model.config.power_building_costs,
+        p_renewable=model.config.power_price_renewable,
+        p_overproduction=model.config.power_price_overproduction,
+        p_conventional=model.config.power_price_conventional,
+        distances=model.config.distances,
+        time_horizon=model.config.time_horizon,
         share_ren=share_ren,
         capacities=capacities
     )

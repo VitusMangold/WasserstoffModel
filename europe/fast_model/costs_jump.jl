@@ -1,12 +1,12 @@
-function init_mats(model, dist_dict)
-    n_countries = count_leaves(dist_dict) + 2
-    distance_matrix = zeros(n_countries, n_countries)
+function init_mats(model)
+    n_ids = length(keys(model.config.ids))
+    distance_matrix = zeros(n_ids, n_ids)
 
-    for (country, neighbors) in dist_dict
-        x = model.ids[country]
-        for neighbor in keys(neighbors)
-            y = model.ids[neighbor]
-            factor = 1 / ((1 - model.transport_loss)^dist_dict[country][neighbor])
+    for (country, neighbors) in model.config.pipes
+        x = model.config.ids[country]
+        for neighbor in neighbors
+            y = model.config.ids[neighbor]
+            factor = 1 / ((1 - model.config.transport_loss)^model.config.distances[country, neighbor])
             distance_matrix[x, y] = factor
             distance_matrix[y, x] = factor
         end
@@ -15,8 +15,8 @@ function init_mats(model, dist_dict)
     return distance_matrix
 end
 
-function init_all_solvers!(model, distances)
-    dist_mat = init_mats(model, distances)
+function init_all_solvers!(model)
+    dist_mat = init_mats(model)
     solvers = [create_solver(model, dist_mat, 1, 2) for _ in axes(model.loads, 1)]
     append!(model.solvers, solvers)
 end
@@ -49,14 +49,14 @@ function max_flow_lp(capacities, model, hypo, snapshot)
         end
         generation = hypo[snapshot, key]
         loading = model.loads[snapshot, key]
-        set!(model.ids["start"], model.ids[key], generation)
-        set!(model.ids[key], model.ids["end"], loading)
+        set!(model.config.ids["start"], model.config.ids[key], generation)
+        set!(model.config.ids[key], model.config.ids["end"], loading)
     end
 
-    for (country, vals) in model.pipes
-        x = model.ids[country]
+    for (country, vals) in model.config.pipes
+        x = model.config.ids[country]
         for neighbor in vals
-            y = model.ids[neighbor]
+            y = model.config.ids[neighbor]
             set!(x, y, capacities[x, y])
             set!(y, x, capacities[x, y])
         end
@@ -71,9 +71,9 @@ end
 function ChainRulesCore.rrule(::typeof(max_flow_lp), model, snapshot)
     solver = model.solvers[snapshot]
     for (country, neighbors) in model.dnet_dict
-        x = model.ids[country]
+        x = model.config.ids[country]
         for (neighbor, capacity) in neighbors
-            y = model.ids[neighbor]
+            y = model.config.ids[neighbor]
             # MOI.set.(solver, DiffOpt.ReverseVariablePrimal(), solver[:f], 1.0)
         end
     end
@@ -84,16 +84,16 @@ function ChainRulesCore.rrule(::typeof(max_flow_lp), model, snapshot)
 end
 
 function near(model, x, y)
-    name_x = findfirst(isequal(x), model.ids)
-    name_y = findfirst(isequal(y), model.ids)
-    dist = model.distances
-    if name_x in keys(model.pipes)
-        if name_y in model.pipes[name_x]
+    name_x = findfirst(isequal(x), model.config.ids)
+    name_y = findfirst(isequal(y), model.config.ids)
+    dist = model.config.distances
+    if name_x in keys(model.config.pipes)
+        if name_y in model.config.pipes[name_x]
             return true
         end
     end
-    if name_y in keys(model.pipes)
-        if name_x in model.pipes[name_y]
+    if name_y in keys(model.config.pipes)
+        if name_x in model.config.pipes[name_y]
             return true
         end
     end

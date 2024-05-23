@@ -1,21 +1,14 @@
-struct MaxflowModel
+struct ModelConfig{S, T}
     ids::Dict{String, Int64}
-    hypothetical::NamedMatrix{Float64, Matrix{Float64}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
-    loads::NamedMatrix{Float64, Matrix{Float64}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
-    net_mat::NamedMatrix{Float64, Matrix{Float64}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}} # this is just used as inplace writing buffer
-    total_gen::NamedVector{Float64, Vector{Float64}, Tuple{OrderedDict{String, Int64}}}
-    solvers::Vector{GenericModel{Float64}} # keep track of the solvers for derivatives and less init time
     pipes::Dict{String, Vector{String}}
-    distances::NamedArray{Int64,2,SparseMatrixCSC{Int64, Int64},Tuple{OrderedDict{String,Int64},OrderedDict{String,Int64}}}
-    time_horizon::Float64
-    power_building_costs::Float64
-    power_price_conventional::Float64
-    power_price_renewable::Float64
-    power_price_overproduction::Float64
-    transport_loss::Float64
-    function MaxflowModel(;
-        hypothetical,
-        loads,
+    distances::T
+    time_horizon::S
+    power_building_costs::S
+    power_price_conventional::S
+    power_price_renewable::S
+    power_price_overproduction::S
+    transport_loss::S
+    function ModelConfig(;
         distances,
         time_horizon,
         power_building_costs,
@@ -24,16 +17,12 @@ struct MaxflowModel
         power_price_overproduction,
         transport_loss
     )
-    ids = Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(OrderedDict(loads)))]])
-        model = new(
+        ids = Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(distances))]])
+        dist = dict_to_named_array(distances, ids)
+        return new{typeof(time_horizon), typeof(dist)}(
             ids,
-            net_dict_to_named_array(OrderedDict(hypothetical), ids),
-            net_dict_to_named_array(OrderedDict(loads), ids),
-            net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), ids),
-            dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), ids),
-            GenericModel{Float64}[],
             Dict(key => collect(keys(value)) for (key, value) in distances if !isempty(value)),
-            dict_to_named_array(distances, ids),
+            dist,
             time_horizon,
             power_building_costs,
             power_price_conventional,
@@ -41,21 +30,45 @@ struct MaxflowModel
             power_price_overproduction,
             transport_loss
         )
-        init_all_solvers!(model, distances)
+    end
+end
+
+struct MaxflowModel{S, T}
+    hypothetical::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
+    loads::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
+    net_mat::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}} # this is just used as inplace writing buffer
+    total_gen::NamedVector{S, Vector{S}, Tuple{OrderedDict{String, Int64}}}
+    solvers::Vector{GenericModel{S}} # keep track of the solvers for derivatives and less init time
+    config::ModelConfig{S, T}
+    function MaxflowModel(;
+        hypothetical,
+        loads,
+        config::ModelConfig{S, T}
+    ) where {S, T}
+    ids = Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(OrderedDict(loads)))]])
+        model = new{S, T}(
+            net_dict_to_named_array(OrderedDict(hypothetical), ids),
+            net_dict_to_named_array(OrderedDict(loads), ids),
+            net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), ids),
+            dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), ids),
+            GenericModel{Float64}[],
+            config
+        )
+        init_all_solvers!(model)
         return model
     end
 end
 
 function calc_net_flow!(; model, flow_matrix, hypo, snapshot)
     for key in axes(model.net_mat, 2)
-        if key in [model.ids["start"], model.ids["end"]]
+        if key in [model.config.ids["start"], model.config.ids["end"]]
             continue
         end
         generation = hypo[snapshot, key]
         loading = model.loads[snapshot, key]
         model.net_mat[snapshot, key] = (
-            (generation - flow_matrix[model.ids["start"], key]) -
-            (loading - flow_matrix[key, model.ids["end"]])
+            (generation - flow_matrix[model.config.ids["start"], key]) -
+            (loading - flow_matrix[key, model.config.ids["end"]])
         )
     end
 end

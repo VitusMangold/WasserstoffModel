@@ -32,12 +32,16 @@ include("costs_jump.jl") # Cost function with jump
 include("config.jl") # Model config used in optimization
 include("optimum.jl") # Function to find the optimum
 
-results_all = @time find_optimum(model, scenario=:all, n_chunks=6)
-results_same = @time find_optimum(model, scenario=:same, n_chunks=6)
-results_fixed = @time find_optimum(model, scenario=:fixed, n_chunks=6)
-results_no_cap = @time find_optimum(model, scenario=:no_cap, n_chunks=6)
-results_nothing = @time find_optimum(model, scenario=:nothing, n_chunks=6)
-results_no_cap_fixed = @time find_optimum(model, scenario=:no_cap_fixed, n_chunks=6)
+# Sanity check
+[key => length(value) for (key, value) in model.hypothetical]
+
+# Scenarios: Find optimized parameters
+results_all = @time find_optimum(model_base, scenario=:all, n_chunks=6)
+results_same = @time find_optimum(model_base, scenario=:same, n_chunks=6)
+results_fixed = @time find_optimum(model_base, scenario=:fixed, n_chunks=6)
+results_no_cap = @time find_optimum(model_base, scenario=:no_cap, n_chunks=6)
+results_nothing = @time find_optimum(model_base, scenario=:nothing, n_chunks=6)
+results_no_cap_fixed = @time find_optimum(model_base, scenario=:no_cap_fixed, n_chunks=6)
 
 # Scenario with halfed building costs
 results_half_all = @time find_optimum(model_half, scenario=:all, n_chunks=6)
@@ -46,8 +50,8 @@ results_half_no_cap_fixed = @time find_optimum(model_half, scenario=:no_cap_fixe
 # If you want to save just one, you can simply comment out the others
 jldopen("results.jld2", "a+") do file
 
-    # file["model"] = model
-    # file["model_half"] = model_half
+    file["config_base"] = model_base.config
+    file["config_half"] = model_half.config
 
     file["results_all"] = results_all
     file["results_same"] = results_same

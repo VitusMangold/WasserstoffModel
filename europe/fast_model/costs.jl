@@ -59,7 +59,7 @@ end
 
     return sum_costs(
         total_gen=model.total_gen,
-        net_mat=model.net_dict,
+        net_mat=model.net_mat,
         power_building_costs=model.power_building_costs,
         p_renewable=model.power_price_renewable,
         p_overproduction=model.power_price_overproduction,

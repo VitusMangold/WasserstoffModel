@@ -40,29 +40,30 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     solver = model.solvers[snapshot]
 
     function set!(i, j, c)
-        # set_upper_bound(solver[:f][i, j], c)
         set_normalized_rhs(solver[:upper][i, j], c)
     end
 
-    for key in keys(model.net_dict)
-        generation = hypo[key][snapshot]
-        loading = model.loads[key][snapshot]
+    for key in names(hypo, 2)
+        if key in ["start", "end"]
+            continue
+        end
+        generation = hypo[snapshot, key]
+        loading = model.loads[snapshot, key]
         set!(model.ids["start"], model.ids[key], generation)
         set!(model.ids[key], model.ids["end"], loading)
     end
 
-    for (country, neighbors) in capacities
+    for (country, vals) in model.pipes
         x = model.ids[country]
-        for (neighbor, capacity) in neighbors
+        for neighbor in vals
             y = model.ids[neighbor]
-            set!(x, y, capacity)
-            set!(y, x, capacity)
+            set!(x, y, capacities[x, y])
+            set!(y, x, capacities[x, y])
         end
     end
     JuMP.optimize!(solver)
-    # throw(InterruptException())
     @assert is_solved_and_feasible(solver)
-    val = value.(solver[:f])    
+    val = value.(solver[:f])
 
     return val
 end
@@ -86,13 +87,13 @@ function near(model, x, y)
     name_x = findfirst(isequal(x), model.ids)
     name_y = findfirst(isequal(y), model.ids)
     dist = model.distances
-    if name_x in keys(dist)
-        if name_y in keys(dist[name_x])
+    if name_x in keys(model.pipes)
+        if name_y in model.pipes[name_x]
             return true
         end
     end
-    if name_y in keys(dist)
-        if name_x in keys(dist[name_y])
+    if name_y in keys(model.pipes)
+        if name_x in model.pipes[name_y]
             return true
         end
     end

@@ -34,9 +34,10 @@ end
 x = [[100.0 for _ in 1:22]; [1.1 for _ in 1:12]]
 
 # JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = 1000
-# # @time for i in 1:10
-# #     test([[100.0 + 100*i for _ in 1:22]; [1.0 for _ in 1:12]])
-# end
+@time for i in 1:10
+    test([[100.0 + 100*i for _ in 1:22]; [1.0 for _ in 1:12]])
+end
 @time test(x)
+@profview test(x)
 layer = PerturbedMultiplicative(test; ε=0.1, nb_samples=5)
 layer(x)

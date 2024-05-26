@@ -31,7 +31,7 @@ function build_costs(costs, distances, capacities)
 end
 
 function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
-    gen_renewable_costs = p_renewable * total_gen' * share_ren * time_horizon
+    gen_renewable_costs = (total_gen' * share_ren) * time_horizon * p_renewable
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
     return gen_renewable_costs + net_power_costs + building_costs

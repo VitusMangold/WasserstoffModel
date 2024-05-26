@@ -33,7 +33,9 @@ end
 
 x = [[100.0 for _ in 1:22]; [1.1 for _ in 1:12]]
 
+x = dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids)
 @time test(x)
+@time costs(model_base, x...)
 
 # # JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = 1000
 # @time for i in 1:10
@@ -42,9 +44,3 @@ x = [[100.0 for _ in 1:22]; [1.1 for _ in 1:12]]
 
 # layer = PerturbedMultiplicative(test; ε=0.1, nb_samples=5)
 # layer(x)
-
-# test_cap = Dict(
-#     key => Dict(neighbor => 1000.0 for neighbor in keys(value))
-#     for (key, value) in distances
-# )
-# dict_to_named_array(test_cap, model.config.ids)

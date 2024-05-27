@@ -40,6 +40,24 @@ function create_solver(model, distance_matrix, source, target)
     return solver
 end
 
+function near(model, x, y)
+    name_x = findfirst(isequal(x), model.config.ids)
+    name_y = findfirst(isequal(y), model.config.ids)
+    dist = model.config.distances
+    if name_x in keys(model.config.pipes)
+        if name_y in model.config.pipes[name_x]
+            return true
+        end
+    end
+    if name_y in keys(model.config.pipes)
+        if name_x in model.config.pipes[name_y]
+            return true
+        end
+    end
+
+    return (name_x == "start" != name_y) ⊻ (name_y == "end" != name_x)
+end
+
 function max_flow_lp(capacities, model, hypo, snapshot)
     solver = model.solvers[snapshot]
 

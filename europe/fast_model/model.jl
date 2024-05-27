@@ -38,7 +38,7 @@ struct MaxflowModel{S, T}
     loads::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
     net_mat::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}} # this is just used as inplace writing buffer
     total_gen::NamedVector{S, Vector{S}, Tuple{OrderedDict{String, Int64}}}
-    solvers::Vector{GenericModel{S}} # keep track of the solvers for derivatives and less init time
+    solvers::Vector{Tuple{GenericModel{S}, GenericModel{S}}} # keep track of the solvers for derivatives and less init time
     config::ModelConfig{S, T}
     function MaxflowModel(;
         hypothetical,
@@ -50,7 +50,7 @@ struct MaxflowModel{S, T}
             net_dict_to_named_array(OrderedDict(loads), config.ids),
             net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), config.ids),
             dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), config.ids),
-            GenericModel{Float64}[],
+            Tuple{GenericModel{Float64}, GenericModel{Float64}}[],
             config
         )
         init_all_solvers!(model)

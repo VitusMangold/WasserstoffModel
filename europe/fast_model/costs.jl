@@ -32,15 +32,16 @@ function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_rene
     gen_renewable_costs = (total_gen' * share_ren) * time_horizon * p_renewable
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
-    println("Gen renewable costs: ", gen_renewable_costs)
-    println("Net power costs: ", net_power_costs)
-    println("Building costs: ", building_costs)
+    # println("Gen renewable costs: ", gen_renewable_costs)
+    # println("Net power costs: ", net_power_costs)
+    # println("Building costs: ", building_costs)
     return gen_renewable_costs + net_power_costs + building_costs
 end
 
- function costs(model::MaxflowModel, capacities, share_ren)
-    # hypo = Dict(key => value .* share_ren[key] for (key, value) in model.hypothetical)
-    hypo = deepcopy(model.hypothetical) .* share_ren'
+scale_up(ren, share_ren) = ren .* share_ren'
+
+function costs(model::MaxflowModel, capacities, share_ren)
+    hypo = scale_up(model.hypothetical, share_ren)
 
     # This is a thread-safe function if snapshots are disjoint
     function calc_snapshots!(snapshots)

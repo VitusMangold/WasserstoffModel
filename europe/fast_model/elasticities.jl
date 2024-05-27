@@ -27,7 +27,3 @@ end
 elasticities(model, cap_all, shares_all)
 
 @time a = costs(model, cap_all, shares_all)
-test(x)
-b = costs(model, cap_same, shares_same)
-b / a
-old_net_dict["DE"] .== model.net_dict["DE"]

@@ -37,20 +37,25 @@ function elasticities(model, capacities, share_ren)
     
     # return func(init)
     # return ForwardDiff.gradient(func, init) .* init ./ costs(model, capacities, share_ren) # (dy / y) / (dx / x)
-    dnet_mat = Enzyme.make_zero(model.net_mat)
-    dtotal_gen = Enzyme.make_zero(model.total_gen)
-    dshare_ren = Enzyme.make_zero(share_ren)
-    ddistances = Enzyme.make_zero(model.config.distances)
+
+    net_mat = model.net_mat.array
+    total_gen = model.total_gen.array
+    share_ren_mat = share_ren.array
+    distances = model.config.distances.array
+    dnet_mat = Enzyme.make_zero(net_mat)
+    dtotal_gen = Enzyme.make_zero(total_gen)
+    dshare_ren = Enzyme.make_zero(share_ren_mat)
+    ddistances = Enzyme.make_zero(distances)
     Enzyme.autodiff(Reverse, sum_costs,
         Const(model.config.power_building_costs),
         Const(model.config.power_price_renewable),
         Const(model.config.power_price_overproduction),
         Const(model.config.power_price_conventional),
         Const(model.config.time_horizon),
-        Duplicated(model.total_gen, dtotal_gen),
-        Duplicated(share_ren, dshare_ren),
-        Duplicated(model.net_mat, dnet_mat),
-        Duplicated(model.config.distances, ddistances),
+        Duplicated(total_gen, dtotal_gen),
+        Duplicated(share_ren_mat, dshare_ren),
+        Duplicated(net_mat, dnet_mat),
+        Duplicated(distances, ddistances),
         Const(capacities),
     )
     return dshare_ren
@@ -60,15 +65,18 @@ end
 Enzyme.API.strictAliasing!(false)
 elasticities(model_base, cap_all, shares_all)
 
-# sum_costs(
-#     model_base.config.power_building_costs,
-#     model_base.config.power_price_renewable,
-#     model_base.config.power_price_overproduction,
-#     model_base.config.power_price_conventional,
-#     model_base.config.time_horizon,
-#     model_base.total_gen,
-#     dict_to_named_vector(shares_all, model_base.config.ids),
-#     model_base.net_mat,
-#     model_base.config.distances,
-#     dict_to_named_array(cap_all, model_base.config.ids),
-# )
+cap_all, shares_all = load("results.jld2", "results_all")
+sum_costs(
+    model_base.config.power_building_costs,
+    model_base.config.power_price_renewable,
+    model_base.config.power_price_overproduction,
+    model_base.config.power_price_conventional,
+    model_base.config.time_horizon,
+    model_base.total_gen,
+    dict_to_named_vector(shares_all, model_base.config.ids),
+    model_base.net_mat,
+    model_base.config.distances,
+    dict_to_named_array(cap_all, model_base.config.ids),
+)
+x = dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids)
+@time costs(model_base, x...)

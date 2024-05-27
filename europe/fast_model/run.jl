@@ -14,6 +14,7 @@ using JLD2
 using JuMP
 using HiGHS
 using DiffOpt
+import MultiObjectiveAlgorithms as MOA
 # using ChainRulesCore
 import MathOptInterface as MOI
 using InferOpt

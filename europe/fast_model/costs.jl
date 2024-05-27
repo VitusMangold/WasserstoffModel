@@ -1,5 +1,3 @@
-partition(iter, n_chunks) = Iterators.partition(iter, div(length(iter) + n_chunks - 1, n_chunks))
-
 """
 Calculate the net costs for the power imbalance.
 We can never get a negative cost (storage intuition: cannot get paid for storing more than).
@@ -34,6 +32,9 @@ function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_rene
     gen_renewable_costs = (total_gen' * share_ren) * time_horizon * p_renewable
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
     building_costs = build_costs(power_building_costs, distances, capacities)
+    println("Gen renewable costs: ", gen_renewable_costs)
+    println("Net power costs: ", net_power_costs)
+    println("Building costs: ", building_costs)
     return gen_renewable_costs + net_power_costs + building_costs
 end
 

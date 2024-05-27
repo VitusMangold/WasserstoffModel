@@ -1,6 +1,6 @@
 function init_mats(model)
     n_ids = length(keys(model.config.ids))
-    distance_matrix = zeros(n_ids, n_ids)
+    distance_matrix = ones(n_ids, n_ids)
 
     for (country, neighbors) in model.config.pipes
         x = model.config.ids[country]
@@ -23,17 +23,15 @@ end
 
 function create_solver(model, distance_matrix, source, target)
     solver = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
-    # solver = Model(() -> DiffOpt.diff_optimizer(optimizer_with_attributes(HiGHS.Optimizer, "log_to_console" => false)))
     # solver = Model(() -> DiffOpt.diff_optimizer(HiGHS.Optimizer))
-    # solver = Model(HiGHS.Optimizer)
     set_silent(solver)
     n = size(distance_matrix, 1)
     @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
-    @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= 1000000)
-    # Capacity constraints are modified in the max_flow_lp function; right now we set all to 0.0
-    # Flow conservation constraints
+    magic_number = 1000000
+    @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= magic_number)
+    # Capacity constraints are modified in the max_flow_lp function; right now we set all to magic_number
+    # Flow conservation constraints with losses
     @constraint(solver, [i = 1:n; i != source && i != target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
-    # @objective(solver, Max, sum(f[:, 2]))
     @objective(solver, Max, [sum(f[:, 2]), -sum(f[1, :])])
     set_attribute(solver, MOA.Algorithm(), MOA.Hierarchical())
     set_attribute.(solver, MOA.ObjectivePriority.(1:2), [2, 1])

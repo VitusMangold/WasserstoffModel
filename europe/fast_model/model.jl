@@ -45,12 +45,11 @@ struct MaxflowModel{S, T}
         loads,
         config::ModelConfig{S, T}
     ) where {S, T}
-    ids = Dict([["start" => 1, "end" => 2]; [key => i + 2 for (i, key) in enumerate(keys(OrderedDict(loads)))]])
         model = new{S, T}(
-            net_dict_to_named_array(OrderedDict(hypothetical), ids),
-            net_dict_to_named_array(OrderedDict(loads), ids),
-            net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), ids),
-            dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), ids),
+            net_dict_to_named_array(OrderedDict(hypothetical), config.ids),
+            net_dict_to_named_array(OrderedDict(loads), config.ids),
+            net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), config.ids),
+            dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), config.ids),
             GenericModel{Float64}[],
             config
         )
@@ -93,8 +92,15 @@ function dict_to_named_array(dict, ids)
 end
 
 function dict_to_named_vector(dict, ids)
-    vals = vcat(zeros(2), collect(values(dict)))
-    names = OrderedDict([findfirst(==(v), ids) => v for v in eachindex(vals)])
+    pairs = [(ids[k], v) for (k, v) in dict]
+    sort!(pairs, by=x->x[1])
+    vals = vcat(zeros(2), [x[2] for x in pairs])
+    names = OrderedDict(
+        vcat(
+            ["start" => 1, "end" => 2],
+            [findfirst(==(val), dict) => index + 2 for (index, val) in enumerate(vals[3:end])]
+        )
+    )
     return NamedArray(
         vals,
         (names,)

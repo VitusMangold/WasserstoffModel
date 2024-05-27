@@ -37,7 +37,7 @@ x = dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(sh
 @time test(x)
 @time costs(model_base, x...)
 
-# # JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = 1000
+# JuMP._CONSTRAINT_LIMIT_FOR_PRINTING[] = 1000
 # @time for i in 1:10
 #     test([[100.0 + 100*i for _ in 1:22]; [1.0 for _ in 1:12]])
 # end

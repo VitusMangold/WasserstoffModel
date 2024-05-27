@@ -41,7 +41,6 @@ end
 function near(model, x, y)
     name_x = findfirst(isequal(x), model.config.ids)
     name_y = findfirst(isequal(y), model.config.ids)
-    dist = model.config.distances
     if name_x in keys(model.config.pipes)
         if name_y in model.config.pipes[name_x]
             return true
@@ -69,8 +68,9 @@ function max_flow_lp(capacities, model, hypo, snapshot)
         end
         generation = hypo[snapshot, key]
         loading = model.loads[snapshot, key]
-        set!(model.config.ids["start"], model.config.ids[key], generation)
-        set!(model.config.ids[key], model.config.ids["end"], loading)
+        country_index = model.config.ids[key]
+        set!(model.config.ids["start"], country_index, generation)
+        set!(country_index, model.config.ids["end"], loading)
     end
 
     for (country, vals) in model.config.pipes
@@ -82,7 +82,7 @@ function max_flow_lp(capacities, model, hypo, snapshot)
         end
     end
     JuMP.optimize!(solver)
-    @assert is_solved_and_feasible(solver)
+    @assert is_solved_and_feasible(solver) (println(solver); termination_status(solver); snapshot)
     val = value.(solver[:f])
 
     return val

@@ -82,17 +82,18 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
     dnet_mat, dcapacities, dshare_ren = ChainRulesCore.rrule(
         sum_costs, model_base, capacities, hypo
     )
-    dhypo = Enzyme.make_zero(model.hypothetical)
-    dflow = Enzyme.make_zero(model.flow)
+    flow = model.flows
+    dhypo = Enzyme.make_zero(hypo)
+    dflow = Enzyme.make_zero(flow)
 
     # Use dnet_mat to backpropagate to the hypo and flow
     Enzyme.autodiff(Reverse, calc_net_flow!,
-        Duplicated(model.net_mat.array, dnet_mat),
+        Duplicated(model.net_mat, dnet_mat),
         Const(model.loads),
-        Const(ids),
+        Const(model.config.ids),
         Duplicated(flow, dflow),
         Duplicated(hypo, dhypo),
-        Const(snapshot)
+        Const(1) # snapshot
     )
 
     # Accumulate over all snapshots

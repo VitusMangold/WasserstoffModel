@@ -38,10 +38,11 @@ function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_rene
     return gen_renewable_costs + net_power_costs + building_costs
 end
 
-scale_up(ren, share_ren) = ren .* share_ren'
+scale_up!(hypo, ren, share_ren) = (hypo .= ren .* share_ren'; return nothing)
 
 function costs(model::MaxflowModel, capacities, share_ren)
-    hypo = scale_up(model.hypothetical, share_ren)
+    hypo = similar(model.hypothetical)
+    scale_up!(hypo, model.hypothetical, share_ren)
 
     # This is a thread-safe function if snapshots are disjoint
     function calc_snapshots!(snapshots)

@@ -1,28 +1,3 @@
-
-sum_costs(
-    power_building_costs,
-    p_renewable,
-    p_overproduction,
-    p_conventional,
-    time_horizon,
-    total_gen,
-    share_ren,
-    net_mat,
-    distances,
-    capacities,
-)::Float64 = sum_costs(
-    total_gen=total_gen,
-    share_ren=share_ren,
-    net_mat=net_mat, # relevant
-    distances=distances,
-    capacities=capacities, # relevant
-    power_building_costs=power_building_costs,
-    p_renewable=p_renewable,
-    p_overproduction=p_overproduction,
-    p_conventional=p_conventional,
-    time_horizon=time_horizon,
-)
-
 """ This function has to be called with the model that was used to optimize the capacities and shares!"""
 function elasticities(model, capacities, share_ren)
 

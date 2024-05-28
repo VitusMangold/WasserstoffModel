@@ -38,6 +38,7 @@ struct MaxflowModel{S, T}
     loads::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}}
     net_mat::NamedMatrix{S, Matrix{S}, Tuple{OrderedDict{Int64, Int64}, OrderedDict{String, Int64}}} # this is just used as inplace writing buffer
     total_gen::NamedVector{S, Vector{S}, Tuple{OrderedDict{String, Int64}}}
+    flows::Vector{JuMP.Containers.SparseAxisArray{Float64, 2, Tuple{Int64, Int64}}}
     solvers::Vector{Tuple{GenericModel{S}, GenericModel{S}}} # keep track of the solvers for derivatives and less init time
     config::ModelConfig{S, T}
     function MaxflowModel(;
@@ -50,6 +51,7 @@ struct MaxflowModel{S, T}
             net_dict_to_named_array(OrderedDict(loads), config.ids),
             net_dict_to_named_array(Dict(key => zeros(length(value)) for (key, value) in loads), config.ids),
             dict_to_named_vector(Dict(key => sum(value) for (key, value) in model_hypothetical), config.ids),
+            JuMP.Containers.SparseAxisArray{Float64, 2, Tuple{Int64, Int64}}[],
             Tuple{GenericModel{Float64}, GenericModel{Float64}}[],
             config
         )
@@ -58,16 +60,16 @@ struct MaxflowModel{S, T}
     end
 end
 
-function calc_net_flow!(; model, flow_matrix, hypo, snapshot)
-    for key in axes(model.net_mat, 2)
-        if key in [model.config.ids["start"], model.config.ids["end"]]
+function calc_net_flow!(net_mat, loads, ids, flow_matrix, hypo, snapshot)
+    for key in axes(net_mat, 2)
+        if key in [ids["start"], ids["end"]]
             continue
         end
         generation = hypo[snapshot, key]
-        loading = model.loads[snapshot, key]
-        model.net_mat[snapshot, key] = (
-            (generation - flow_matrix[model.config.ids["start"], key]) -
-            (loading - flow_matrix[key, model.config.ids["end"]])
+        loading = loads[snapshot, key]
+        net_mat[snapshot, key] = (
+            (generation - flow_matrix[ids["start"], key]) -
+            (loading - flow_matrix[key, ids["end"]])
         )
     end
 end

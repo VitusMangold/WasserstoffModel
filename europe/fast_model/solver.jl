@@ -18,7 +18,11 @@ end
 function init_all_solvers!(model)
     dist_mat = init_mats(model)
     solvers = [create_solver(model, dist_mat, 1, 2) for _ in axes(model.loads, 1)]
+    n = size(dist_mat, 1)
+    Containers.@container(flow[i = 1:n, j = 1:n; near(model, i, j)], 1.0)
+    flows = fill(flow, length(solvers))
     append!(model.solvers, solvers)
+    append!(model.flows, flows)
 end
 
 function create_solver(model, distance_matrix, source, target)

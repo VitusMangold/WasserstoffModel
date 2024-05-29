@@ -72,6 +72,7 @@ function calc_net_flow!(net_mat, loads, ids, flow_matrix, hypo, snapshot)
             (loading - flow_matrix[key, ids["end"]])
         )
     end
+    return nothing
 end
 
 function count_leaves(nested_dict)

@@ -22,9 +22,8 @@ using Zygote
 using ChainRulesCore
 using NamedArrays
 using SparseArrays
-using ForwardDiff
 using Enzyme
-using Zygote
+using FLoops
 
 using BenchmarkTools
 

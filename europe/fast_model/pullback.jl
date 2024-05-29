@@ -67,15 +67,29 @@ end
 
 """ Reverse diff max_flow_lp """
 function ChainRulesCore.rrule(::typeof(max_flow_lp), dflows, model, capacities, dcapacities, hypo, dhypo)
-    for snapshot in axes(model.hypothetical, 1)
-        grad1, grad2 = ChainRulesCore.rrule(max_flow_lp, dflows[snapshot], model, dcapacities, snapshot)
-        ChainRulesCore.rrule(set_bounds!,
-            grad1, grad2, capacities, dcapacities, hypo, dhypo, model, snapshot
-        )
+
+    # Initialize grads
+    res = ChainRulesCore.rrule(max_flow_lp, dflows[1], model, dcapacities, 1)
+    n_chunks = 24
+    buffer = [[deepcopy(res) for _ in 1:n_chunks] for _ in 1:Threads.nthreads()]
+
+    # Fill grads
+    lock = ReentrantLock();
+    @floop for snapshot in 1:(axes(model.hypothetical, 1)[2] / n_chunks)
+        i = Threads.threadid()
+        for chunk in 1:n_chunks
+            grad1, grad2 = ChainRulesCore.rrule(max_flow_lp, dflows[snapshot], model, dcapacities, snapshot)
+            buffer[i][chunk] = grad1, grad2
+        end
+        Threads.lock(lock) do
+            for chunk in 1:n_chunks
+                grad1, grad2 = buffer[i][chunk]
+                ChainRulesCore.rrule(set_bounds!,
+                    grad1, grad2, capacities, dcapacities, hypo, dhypo, model, snapshot
+                )
+            end
+        end
     end
-    # grad1, grad2 = ChainRulesCore.rrule(max_flow_lp, dflows[1], model, dcapacities, dhypo, 1)
-    # global g1 = grad1
-    # global g2 = grad2
 end
 
 """ Reverse diff costs """
@@ -83,15 +97,19 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
     dnet_mat, dcapacities, dshare_ren = ChainRulesCore.rrule(
         sum_costs, model_base, capacities, share_ren
     )
+    global pre_dcapacities = deepcopy(dcapacities)
+    global pre_dshare_ren = deepcopy(dshare_ren)
     hypo = similar(model.hypothetical)
     scale_up!(hypo, model.hypothetical, share_ren)
     flows = model.flows
     dhypo = Enzyme.make_zero(hypo.array)
     dflows = Enzyme.make_zero(flows)
 
+    # TODO: use batched autodiff
     # Use dnet_mat to backpropagate to the hypo and flow
     for snapshot in axes(model.hypothetical, 1)
         Enzyme.autodiff(Reverse, calc_net_flow!,
+            Const,
             Duplicated(model.net_mat.array, dnet_mat),
             Const(model.loads),
             Const(model.config.ids),
@@ -100,9 +118,12 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
             Const(snapshot) # snapshot
         )
     end
+
+    # FIXME: dcapacities is not properly updated
     # Use flow matrix to backpropagate to hypo and capacities
     ChainRulesCore.rrule(max_flow_lp, dflows, model, capacities.array, dcapacities.array, hypo.array, dhypo)
     
+    # FIXME: dshares is updated too heavily
     # Use hypo to backpropagate to shares
     Enzyme.autodiff(
         Reverse,
@@ -112,12 +133,14 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
         Const(model.hypothetical),
         Duplicated(share_ren.array, dshare_ren)
     )
+    global post_dcapacities = deepcopy(dcapacities)
+    global post_dshare_ren = deepcopy(dshare_ren)
 
     return dcapacities, dshare_ren
 end
 
 cap_all, shares_all = load("results.jld2", "results_all")
-costs(model_base, dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids))
+@profview costs(model_base, dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids))
 a = ChainRulesCore.rrule(
     costs,
     model_base,

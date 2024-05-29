@@ -48,18 +48,7 @@ function create_solver(model, distance_matrix, source, target)
     # Minimize wasted energy
     @constraint(solver2, result, sum(solver2[:f][:, 2]) ≥ magic_number)
     @objective(solver2, Min, sum(solver2[:f][1, :]))
-
-    # solver = Model(() -> MOA.Optimizer(HiGHS.Optimizer))
-    # set_silent(solver)
-    # n = size(distance_matrix, 1)
-    # @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] >= 0)
-    # # Capacity constraints are modified in the max_flow_lp function; right now we set all to magic_number
-    # @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] <= magic_number)
-    # # Flow conservation constraints with losses
-    # @constraint(solver, [i = 1:n; i != source && i != target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
-    # @objective(solver, Max, [sum(f[:, 2]), -sum(f[1, :])])
-    # set_attribute(solver, MOA.Algorithm(), MOA.Hierarchical())
-    # set_attribute.(solver, MOA.ObjectivePriority.(1:2), [2, 1])
+    
     return (solver1, solver2)
 end
 
@@ -80,12 +69,11 @@ function near(model, x, y)
     return (name_x == "start" != name_y) ⊻ (name_y == "end" != name_x)
 end
 
-function max_flow_lp(capacities, model, hypo, snapshot)
-    solver = model.solvers[snapshot]
+function set_bounds!(solver1, solver2, capacities, hypo, loads, pipes, ids, snapshot)
 
     function set!(i, j, c)
-        set_normalized_rhs(solver[1][:upper][i, j], c)
-        set_normalized_rhs(solver[2][:upper][i, j], c)
+        set_normalized_rhs(solver1[:upper][i, j], c)
+        set_normalized_rhs(solver2[:upper][i, j], c)
     end
 
     for key in names(hypo, 2)
@@ -93,20 +81,29 @@ function max_flow_lp(capacities, model, hypo, snapshot)
             continue
         end
         generation = hypo[snapshot, key]
-        loading = model.loads[snapshot, key]
-        country_index = model.config.ids[key]
-        set!(model.config.ids["start"], country_index, generation)
-        set!(country_index, model.config.ids["end"], loading)
+        loading = loads[snapshot, key]
+        country_index = ids[key]
+        set!(ids["start"], country_index, generation)
+        set!(country_index, ids["end"], loading)
     end
 
-    for (country, vals) in model.config.pipes
-        x = model.config.ids[country]
+    for (country, vals) in pipes
+        x = ids[country]
         for neighbor in vals
-            y = model.config.ids[neighbor]
+            y = ids[neighbor]
             set!(x, y, capacities[x, y])
             set!(y, x, capacities[x, y])
         end
     end
+end
+
+function max_flow_lp(capacities, model, hypo, snapshot)
+    solver = model.solvers[snapshot]
+
+    set_bounds!(
+        solver[1], solver[2],
+        capacities, hypo, model.loads, model.config.pipes, model.config.ids, snapshot
+    )
 
     check(solver) = @assert is_solved_and_feasible(solver) (
         println(solver); println(termination_status(solver)); snapshot
@@ -118,10 +115,6 @@ function max_flow_lp(capacities, model, hypo, snapshot)
     JuMP.optimize!(solver[2])
     check(solver[2])
     val = value.(solver[2][:f])
-
-    # JuMP.optimize!(solver)
-    # @assert is_solved_and_feasible(solver) (println(solver); println(termination_status(solver)); snapshot)
-    # val = value.(solver[:f])
 
     return val
 end

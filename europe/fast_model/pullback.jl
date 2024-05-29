@@ -1,27 +1,4 @@
-sum_costs(
-    power_building_costs,
-    p_renewable,
-    p_overproduction,
-    p_conventional,
-    time_horizon,
-    total_gen,
-    share_ren,
-    net_mat,
-    distances,
-    capacities,
-)::Float64 = sum_costs(
-    total_gen=total_gen,
-    share_ren=share_ren,
-    net_mat=net_mat,
-    distances=distances,
-    capacities=capacities, # relevant
-    power_building_costs=power_building_costs,
-    p_renewable=p_renewable,
-    p_overproduction=p_overproduction,
-    p_conventional=p_conventional,
-    time_horizon=time_horizon,
-)
-
+""" Reverse diff sum_costs """
 function ChainRulesCore.rrule(::typeof(sum_costs), model::MaxflowModel, capacities, share_ren)
     net_mat = model.net_mat.array
     share_ren_mat = share_ren.array
@@ -44,7 +21,29 @@ function ChainRulesCore.rrule(::typeof(sum_costs), model::MaxflowModel, capaciti
     return dnet_mat, dcapacities, dshare_ren
 end
 
-function ChainRulesCore.rrule(::typeof(max_flow_lp), dflow, model, dcapacities, dhypo, snapshot)
+""" Reverse diff set_bounds! """
+function ChainRulesCore.rrule(::typeof(set_bounds!),
+    grad1, grad2, capacities, dcapacities, hypo, dhypo, model, snapshot
+)
+    g1 = Enzyme.make_zero(grad1)
+    g2 = Enzyme.make_zero(grad2)
+    Enzyme.autodiff(
+        Reverse,
+        set_bounds!,
+        Const,
+        DuplicatedNoNeed(g1, grad1),
+        DuplicatedNoNeed(g2, grad2),
+        Duplicated(capacities, dcapacities),
+        Duplicated(hypo, dhypo),
+        Const(model.loads),
+        Const(model.config.pipes),
+        Const(model.config.ids),
+        Const(snapshot)
+    )
+end
+
+""" Reverse diff max_flow_lp at a given snapshot """
+function ChainRulesCore.rrule(::typeof(max_flow_lp), dflow, model, dcapacities, snapshot)
 
     solver = model.solvers[snapshot]
 
@@ -54,29 +53,41 @@ function ChainRulesCore.rrule(::typeof(max_flow_lp), dflow, model, dcapacities, 
     obj_exp = MOI.get.(solver[2], DiffOpt.ReverseConstraintFunction(), solver[2][:result])
     grad = JuMP.constant.(obj_exp)
 
-    # Backpropagate the achieved max flow to the capacities
-    MOI.set(solver[1], DiffOpt.ForwardObjectiveFunction(), grad)
-    DiffOpt.forward_differentiate!(solver[1])
-    obj_exp = MOI.get.(solver[1], DiffOpt.ForwardConstraintFunction(), solver[1][:upper])
-    grad = JuMP.constant.(obj_exp)
-    return grad
+    # Backpropagate the flow matrix impact to the capacities/hypo
+    obj_exp = MOI.get.(solver[2], DiffOpt.ReverseConstraintFunction(), solver[2][:upper])
+    grad2 = JuMP.constant.(obj_exp)
+
+    # Backpropagate the achieved max flow to the capacities/hypo
+    MOI.set.(solver[1], DiffOpt.ReverseVariablePrimal(), solver[1][:f][:, 2], grad) # they have all the same gradient
+    DiffOpt.reverse_differentiate!(solver[1])
+    obj_exp = MOI.get.(solver[1], DiffOpt.ReverseConstraintFunction(), solver[1][:upper])
+    grad1 = JuMP.constant.(obj_exp)
+    return grad1, grad2
 end
 
-function ChainRulesCore.rrule(::typeof(max_flow_lp), dflow, model, dcapacities, dhypo)
-    for snapshot in snapshots
-        ChainRulesCore.rrule(max_flow_lp, dnet_mat, model, dcapacities, dflow, snapshot)
+""" Reverse diff max_flow_lp """
+function ChainRulesCore.rrule(::typeof(max_flow_lp), dflows, model, capacities, dcapacities, hypo, dhypo)
+    for snapshot in axes(model.hypothetical, 1)
+        grad1, grad2 = ChainRulesCore.rrule(max_flow_lp, dflows[snapshot], model, dcapacities, snapshot)
+        ChainRulesCore.rrule(set_bounds!,
+            grad1, grad2, capacities, dcapacities, hypo, dhypo, model, snapshot
+        )
     end
+    # grad1, grad2 = ChainRulesCore.rrule(max_flow_lp, dflows[1], model, dcapacities, dhypo, 1)
+    # global g1 = grad1
+    # global g2 = grad2
 end
 
+""" Reverse diff costs """
 function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, share_ren)
-    # TODO: check that vals in inplace matrices are correct
     dnet_mat, dcapacities, dshare_ren = ChainRulesCore.rrule(
         sum_costs, model_base, capacities, share_ren
     )
-    hypo = scale_up(model.hypothetical, share_ren)
-    flow = model.flows
+    hypo = similar(model.hypothetical)
+    scale_up!(hypo, model.hypothetical, share_ren)
+    flows = model.flows
     dhypo = Enzyme.make_zero(hypo.array)
-    dflow = Enzyme.make_zero(flow)
+    dflows = Enzyme.make_zero(flows)
 
     # Use dnet_mat to backpropagate to the hypo and flow
     for snapshot in axes(model.hypothetical, 1)
@@ -84,17 +95,17 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
             Duplicated(model.net_mat.array, dnet_mat),
             Const(model.loads),
             Const(model.config.ids),
-            Duplicated(flow[snapshot], dflow[snapshot]),
+            Duplicated(flows[snapshot], dflows[snapshot]),
             Duplicated(hypo.array, dhypo),
             Const(snapshot) # snapshot
         )
     end
     # Use flow matrix to backpropagate to hypo and capacities
-    # ChainRulesCore.rrule(max_flow_lp, dflow, model, dcapacities, dhypo)
+    ChainRulesCore.rrule(max_flow_lp, dflows, model, capacities.array, dcapacities.array, hypo.array, dhypo)
     
     # Use hypo to backpropagate to shares
     Enzyme.autodiff(
-        Reverse, 
+        Reverse,
         scale_up!,
         Const,
         Duplicated(hypo.array, dhypo),
@@ -106,24 +117,22 @@ function ChainRulesCore.rrule(::typeof(costs), model::MaxflowModel, capacities, 
 end
 
 cap_all, shares_all = load("results.jld2", "results_all")
+costs(model_base, dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids))
 a = ChainRulesCore.rrule(
     costs,
     model_base,
     dict_to_named_array(cap_all, model_base.config.ids),
     dict_to_named_vector(shares_all, model_base.config.ids)
 )
-
-dh = ones(size(model_base.hypothetical))
-h = deepcopy(model_base.hypothetical.array)
-din = Enzyme.make_zero(dict_to_named_vector(shares_all, model_base.config.ids).array)
-Enzyme.autodiff(
-    Reverse,
-    scale_up!,
-    Const,
-    Duplicated(h, dh),
-    Const(model_base.hypothetical),
-    Duplicated(dict_to_named_vector(shares_all, model_base.config.ids).array, din),
+@profview ChainRulesCore.rrule(
+    costs,
+    model_base,
+    dict_to_named_array(cap_all, model_base.config.ids),
+    dict_to_named_vector(shares_all, model_base.config.ids)
 )
-
-scale_up!(h, model_base.hypothetical, dict_to_named_vector(shares_all, model_base.config.ids).array)
-h .= model_base.hypothetical .* dict_to_named_vector(shares_all, model_base.config.ids).array'
+@time ChainRulesCore.rrule(
+    costs,
+    model_base,
+    dict_to_named_array(cap_all, model_base.config.ids),
+    dict_to_named_vector(shares_all, model_base.config.ids)
+)

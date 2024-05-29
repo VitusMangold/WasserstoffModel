@@ -48,7 +48,7 @@ function create_solver(model, distance_matrix, source, target)
     # Minimize wasted energy
     @constraint(solver2, result, sum(solver2[:f][:, 2]) ≥ magic_number)
     @objective(solver2, Min, sum(solver2[:f][1, :]))
-    
+
     return (solver1, solver2)
 end
 
@@ -69,22 +69,26 @@ function near(model, x, y)
     return (name_x == "start" != name_y) ⊻ (name_y == "end" != name_x)
 end
 
-function set_bounds!(solver1, solver2, capacities, hypo, loads, pipes, ids, snapshot)
+function set_bounds!(con1, con2, capacities, hypo, loads, pipes, ids, snapshot)
 
     function set!(i, j, c)
-        set_normalized_rhs(solver1[:upper][i, j], c)
-        set_normalized_rhs(solver2[:upper][i, j], c)
+        if eltype(con1) <: ConstraintRef # for backpropagation
+            set_normalized_rhs(con1[i, j], c)
+            set_normalized_rhs(con2[i, j], c)
+        else
+            con1[i, j] = c
+            con2[i, j] = c
+        end
     end
 
-    for key in names(hypo, 2)
-        if key in ["start", "end"]
+    for key in axes(hypo, 2)
+        if key in [ids["start"], ids["end"]]
             continue
         end
         generation = hypo[snapshot, key]
         loading = loads[snapshot, key]
-        country_index = ids[key]
-        set!(ids["start"], country_index, generation)
-        set!(country_index, ids["end"], loading)
+        set!(ids["start"], key, generation)
+        set!(key, ids["end"], loading)
     end
 
     for (country, vals) in pipes
@@ -95,13 +99,14 @@ function set_bounds!(solver1, solver2, capacities, hypo, loads, pipes, ids, snap
             set!(y, x, capacities[x, y])
         end
     end
+    return nothing
 end
 
 function max_flow_lp(capacities, model, hypo, snapshot)
     solver = model.solvers[snapshot]
 
     set_bounds!(
-        solver[1], solver[2],
+        solver[1][:upper], solver[2][:upper],
         capacities, hypo, model.loads, model.config.pipes, model.config.ids, snapshot
     )
 

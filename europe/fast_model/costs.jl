@@ -75,3 +75,27 @@ function costs(model::MaxflowModel, capacities, share_ren)
         capacities=capacities
     )
 end
+
+sum_costs(
+    power_building_costs,
+    p_renewable,
+    p_overproduction,
+    p_conventional,
+    time_horizon,
+    total_gen,
+    share_ren,
+    net_mat,
+    distances,
+    capacities,
+)::Float64 = sum_costs(
+    total_gen=total_gen,
+    share_ren=share_ren,
+    net_mat=net_mat,
+    distances=distances,
+    capacities=capacities, # relevant
+    power_building_costs=power_building_costs,
+    p_renewable=p_renewable,
+    p_overproduction=p_overproduction,
+    p_conventional=p_conventional,
+    time_horizon=time_horizon,
+)

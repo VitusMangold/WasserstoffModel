@@ -44,3 +44,32 @@ x = dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(sh
 
 # layer = PerturbedMultiplicative(test; ε=0.1, nb_samples=5)
 # layer(x)
+
+initial_cap = Dict(
+    key => Dict(neighbor => 0.0 for neighbor in keys(value))
+    for (key, value) in distances
+)
+initial_share = Dict(key => 1.0 for key in keys(distances))
+t_cap = dict_to_named_array(initial_cap, model_base.config.ids)
+t_share = dict_to_named_vector(initial_share, model_base.config.ids)
+
+costs(model_base, t_cap, t_share)
+a = ChainRulesCore.rrule(
+    costs,
+    model_base,
+    t_cap, t_share
+)
+a[1]
+a[2]
+
+initial_cap_new = deepcopy(initial_cap)
+delta = 0.001
+initial_cap_new["DE"]["FR"] = delta
+t_cap_new = dict_to_named_array(initial_cap_new, model_base.config.ids)
+(costs(model_base, t_cap_new, t_share) - costs(model_base, t_cap, t_share)) / delta
+
+initial_share_new = deepcopy(initial_share)
+delta = 0.00001
+initial_share_new["FR"] = 1.0 + delta
+t_share_new = dict_to_named_vector(initial_share_new, model_base.config.ids)
+(costs(model_base, t_cap, t_share_new) - costs(model_base, t_cap, t_share)) / delta

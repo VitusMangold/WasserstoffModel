@@ -21,7 +21,7 @@ function power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_h
     end
     
     # Sum the net costs across all countries
-    return sum(net_costs.(eachcol(net_mat)))
+    return sum(net_costs.(eachcol(net_mat)[3:end])) # [3:end] is for debugging purposes
 end
 
 function build_costs(costs, distances, capacities)

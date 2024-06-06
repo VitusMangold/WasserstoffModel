@@ -15,7 +15,6 @@ using JuMP
 using HiGHS
 using DiffOpt
 import MultiObjectiveAlgorithms as MOA
-# using ChainRulesCore
 import MathOptInterface as MOI
 using InferOpt
 using Zygote
@@ -38,16 +37,16 @@ include("optimum.jl") # Function to find the optimum
 [key => length(value) for (key, value) in model.hypothetical]
 
 # Scenarios: Find optimized parameters
-results_all = @time find_optimum(model_base, scenario=:all, n_chunks=6)
-results_same = @time find_optimum(model_base, scenario=:same, n_chunks=6)
-results_fixed = @time find_optimum(model_base, scenario=:fixed, n_chunks=6)
-results_no_cap = @time find_optimum(model_base, scenario=:no_cap, n_chunks=6)
-results_nothing = @time find_optimum(model_base, scenario=:nothing, n_chunks=6)
-results_no_cap_fixed = @time find_optimum(model_base, scenario=:no_cap_fixed, n_chunks=6)
+results_all = @time find_optimum(model_base, scenario=:all)
+results_same = @time find_optimum(model_base, scenario=:same)
+results_fixed = @time find_optimum(model_base, scenario=:fixed)
+results_no_cap = @time find_optimum(model_base, scenario=:no_cap)
+results_nothing = @time find_optimum(model_base, scenario=:nothing)
+results_no_cap_fixed = @time find_optimum(model_base, scenario=:no_cap_fixed)
 
 # Scenario with halfed building costs
-results_half_all = @time find_optimum(model_half, scenario=:all, n_chunks=6)
-results_half_no_cap_fixed = @time find_optimum(model_half, scenario=:no_cap_fixed, n_chunks=6)
+results_half_all = @time find_optimum(model_half, scenario=:all)
+results_half_no_cap_fixed = @time find_optimum(model_half, scenario=:no_cap_fixed)
 
 # If you want to save just one, you can simply comment out the others
 jldopen("results.jld2", "a+") do file

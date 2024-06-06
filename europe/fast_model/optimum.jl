@@ -1,4 +1,4 @@
-function find_optimum(model; scenario, n_chunks=60)
+function find_optimum(model; scenario)
 
     n_leaves = count_leaves(model.config.distances)
 

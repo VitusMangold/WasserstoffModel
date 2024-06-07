@@ -44,23 +44,20 @@ function costs(model::MaxflowModel, capacities, share_ren)
     hypo = similar(model.hypothetical)
     scale_up!(hypo, model.hypothetical, share_ren)
 
-    # This is a thread-safe function if snapshots are disjoint
-    function calc_snapshots!(snapshots)
-        
-        Threads.@threads for snapshot in snapshots
-            model.flows[snapshot] = max_flow_lp(capacities, model, hypo, snapshot)
-            calc_net_flow!(model.net_mat, model.loads, model.config.ids, model.flows[snapshot], hypo, snapshot)
-            if snapshot == 1673
-                # println(hypo[1, :])
-                # println(model.solvers[snapshot])
-                # println(F)
-                # println(grad)
-                # println("Hier")
-            end
+    snapshots = axes(model.hypothetical, 1)
+
+    # This is thread-safe if snapshots are disjoint        
+    Threads.@threads for snap in snapshots
+        model.flows[snap] = max_flow_lp(capacities, model, hypo, snap)
+        calc_net_flow!(model.net_mat, model.loads, model.config.ids, model.flows[snap], hypo, snap)
+        if snap == 1673
+            # println(hypo[1, :])
+            # println(model.solvers[snap])
+            # println(F)
+            # println(grad)
+            # println("Hier")
         end
     end
-
-    calc_snapshots!(axes(model.hypothetical, 1))
 
     return sum_costs(
         total_gen=model.total_gen,
@@ -76,6 +73,7 @@ function costs(model::MaxflowModel, capacities, share_ren)
     )
 end
 
+# For backpropagation
 sum_costs(
     power_building_costs,
     p_renewable,
@@ -92,7 +90,7 @@ sum_costs(
     share_ren=share_ren,
     net_mat=net_mat,
     distances=distances,
-    capacities=capacities, # relevant
+    capacities=capacities,
     power_building_costs=power_building_costs,
     p_renewable=p_renewable,
     p_overproduction=p_overproduction,

@@ -28,10 +28,10 @@ function build_costs(costs, distances, capacities)
     sum(capacities .* distances) * costs
 end
 
-function sum_costs(; total_gen, net_mat, share_ren, power_building_costs, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
+function sum_costs(; total_gen, net_mat, share_ren, p_building, p_renewable, p_overproduction, p_conventional, distances, time_horizon, capacities)
     gen_renewable_costs = (total_gen' * share_ren) * time_horizon * p_renewable
     net_power_costs = power_imbalance_costs(p_overproduction, p_conventional, net_mat, time_horizon)
-    building_costs = build_costs(power_building_costs, distances, capacities)
+    building_costs = build_costs(p_building, distances, capacities)
     # println("Gen renewable costs: ", gen_renewable_costs)
     # println("Net power costs: ", net_power_costs)
     # println("Building costs: ", building_costs)
@@ -61,15 +61,15 @@ function costs(model::MaxflowModel, capacities, share_ren)
 
     return sum_costs(
         total_gen=model.total_gen,
-        net_mat=model.net_mat,
-        power_building_costs=model.config.power_building_costs,
+        p_building=model.config.power_building_costs,
         p_renewable=model.config.power_price_renewable,
         p_overproduction=model.config.power_price_overproduction,
         p_conventional=model.config.power_price_conventional,
         distances=model.config.distances,
         time_horizon=model.config.time_horizon,
-        share_ren=share_ren,
-        capacities=capacities
+        net_mat=model.net_mat, # gradient
+        capacities=capacities, # gradient
+        share_ren=share_ren # gradient
     )
 end
 
@@ -91,7 +91,7 @@ sum_costs(
     net_mat=net_mat,
     distances=distances,
     capacities=capacities,
-    power_building_costs=power_building_costs,
+    p_building=power_building_costs,
     p_renewable=p_renewable,
     p_overproduction=p_overproduction,
     p_conventional=p_conventional,

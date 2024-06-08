@@ -46,30 +46,34 @@ x = dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(sh
 # layer(x)
 
 initial_cap = Dict(
-    key => Dict(neighbor => 0.0 for neighbor in keys(value))
+    key => Dict(neighbor => 100.0 for neighbor in keys(value))
     for (key, value) in distances
 )
-initial_share = Dict(key => 1.0 for key in keys(distances))
+initial_share = Dict(key => 1.1 for key in keys(distances))
 t_cap = dict_to_named_array(initial_cap, model_base.config.ids)
 t_share = dict_to_named_vector(initial_share, model_base.config.ids)
 
 costs(model_base, t_cap, t_share)
-a = ChainRulesCore.rrule(
+a = gradient(
     costs,
     model_base,
     t_cap, t_share
 )
-a[1]
-a[2]
+a[1] # 1.047
+a[2] # -4.3
 
 initial_cap_new = deepcopy(initial_cap)
-delta = 0.001
-initial_cap_new["DE"]["FR"] = delta
+delta = 0.0001
+initial_cap_new["DE"]["FR"] += delta
 t_cap_new = dict_to_named_array(initial_cap_new, model_base.config.ids)
-(costs(model_base, t_cap_new, t_share) - costs(model_base, t_cap, t_share)) / delta
+(costs(model_base, t_cap_new, t_share) - costs(model_base, t_cap, t_share)) / delta # -3.87 * ...
+(
+    build_costs(model_base.config.power_building_costs, model_base.config.distances, t_cap_new)
+    - build_costs(model_base.config.power_building_costs, model_base.config.distances, t_cap)
+) / delta
 
 initial_share_new = deepcopy(initial_share)
-delta = 0.00001
-initial_share_new["FR"] = 1.0 + delta
+delta = 0.0001
+initial_share_new["DE"] += delta
 t_share_new = dict_to_named_vector(initial_share_new, model_base.config.ids)
-(costs(model_base, t_cap, t_share_new) - costs(model_base, t_cap, t_share)) / delta
+(costs(model_base, t_cap, t_share_new) - costs(model_base, t_cap, t_share)) / delta # -5.29 * ...

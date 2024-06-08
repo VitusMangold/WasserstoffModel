@@ -100,7 +100,7 @@ function dict_to_named_vector(dict, ids)
     vals = vcat(zeros(2), [x[2] for x in pairs])
     raw_names = vcat(["start", "end"], [x[1] for x in pairs])
     names = OrderedDict(
-        [findfirst(==(index), ids) => val for (index, val) in enumerate(raw_names)]
+        [findfirst(==(index), ids) => index for (index, val) in enumerate(raw_names)]
     )
     return NamedArray(
         vals,

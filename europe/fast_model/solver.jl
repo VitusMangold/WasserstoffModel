@@ -32,7 +32,7 @@ function create_solver(model, distance_matrix, source, target)
         # Variable definition
         @variable(solver, f[i = 1:n, j = 1:n; near(model, i, j)] ≥ 0)
         # Capacity constraints are modified in the max_flow_lp function; right now we set all to magic_number
-        @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], f[i, j] ≤ magic_number)
+        @constraint(solver, upper[i = 1:n, j = 1:n; near(model, i, j)], distance_matrix[j, i] * f[i, j] ≤ magic_number)
         # Flow conservation constraints with losses
         @constraint(solver, [i = 1:n; i ≠ source && i ≠ target], sum(f[:, i]) == sum(distance_matrix[j, i] * f[i, j] for j in 1:n if near(model, i, j)))
     end

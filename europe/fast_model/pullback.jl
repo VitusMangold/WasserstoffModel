@@ -53,7 +53,7 @@ function gradient(::typeof(max_flow_lp), dflow, model, capacities, dcapacities, 
                 # -> schaue schnellster Weg von Land zu Ende und nehme das als Fluss/Ableitung von Start los
             else # Leitung A -> B
                 cap_i, cap_j = order(i, j)
-                if isapprox(capacities[cap_i, cap_j], val) || model.net_mat[snapshot, cap_j] >= 0 # pipe full or target is already satisfied
+                if isapprox(capacities[cap_i, cap_j] / exp(log_dist[cap_i, cap_j]), val) || model.net_mat[snapshot, cap_j] >= 0 # pipe full or target is already satisfied
                     F[i, j] = Inf
                 end
                 # -> schaue schnellster Weg von Land B zu Ende und nehme das mal (A -> B) als Fluss/Ableitung
@@ -106,7 +106,13 @@ function gradient(::typeof(max_flow_lp), dflow, model, capacities, dcapacities, 
             # if i == 3
             #     println("parent: ", parent, " last_parent: ", last_parent)
             # end
-            dcapacities[cap_i, cap_j] += dflow[parent, last_parent] #/ exp(F[parent, last_parent])
+            # Loss is measured by distance parent to j
+            delta = dflow[parent, last_parent] / exp(res1.dists[i] + log_dist[i, j] - res1.dists[parent])
+            if cap_i == 1
+                dhypo[snapshot, cap_j] += delta
+            else
+                dcapacities[cap_i, cap_j] += delta
+            end
             last_parent = parent
             parent = res1.parents[parent]
         end
@@ -117,7 +123,12 @@ function gradient(::typeof(max_flow_lp), dflow, model, capacities, dcapacities, 
             # if i == 3
             #     println("child: ", child, " last_child: ", last_child)
             # end
-            dcapacities[cap_i, cap_j] += dflow[last_child, child] #/ exp(F[parent, last_parent])
+            delta = dflow[last_child, child] / exp(res2.dists[j] + log_dist[i, j] - res2.dists[child])
+            if cap_i == 1
+                dhypo[snapshot, cap_j] += delta
+            else
+                dcapacities[cap_i, cap_j] += delta
+            end
             last_child = child
             child = res2.parents[child]
         end
@@ -133,6 +144,10 @@ function gradient(::typeof(max_flow_lp), dflow, model, capacities, dcapacities, 
                 propagate_forward(res2, res1, col, row, dflow') # reverse roles
             end
         end
+        # Hypo
+        if res2.dists[row] < Inf # can we load from row?
+            propagate_forward(res1, res2, 1, row, dflow) # reverse roles
+        end
     end
 
     # dhypo[snapshot, i] += val
@@ -140,6 +155,7 @@ function gradient(::typeof(max_flow_lp), dflow, model, capacities, dcapacities, 
     return graph1, graph2, F, res1, res2
 end
 
+# r1.dists[3] + log_dist[3, 13] - r1.dists[3]
 # IT, AT, ES, DK (6, 8, 9, 11)
 post_dhypo = deepcopy(pre_dhypo)
 post_dhypo .= 0
@@ -154,7 +170,7 @@ function gradient(::typeof(max_flow_lp), dflows, model, capacities, dcapacities,
 
     log_losses = log.(init_mats(model_base))
     for snap in axes(dflows, 1)
-        F, r1, r2 = gradient(max_flow_lp, dflows[i], model, capacities, dcapacities, hypo, dhypo, log_losses, i)
+        F, r1, r2 = gradient(max_flow_lp, dflows[snap], model, capacities, dcapacities, hypo, dhypo, log_losses, snap)
     end
 end
 
@@ -210,7 +226,7 @@ function gradient(::typeof(costs), model::MaxflowModel, capacities, share_ren)
 end
 
 cap_all, shares_all = load("results.jld2", "results_all")
-@profview costs(model_base, dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids))
+costs(model_base, dict_to_named_array(cap_all, model_base.config.ids), dict_to_named_vector(shares_all, model_base.config.ids))
 a = gradient(
     costs,
     model_base,

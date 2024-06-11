@@ -49,7 +49,7 @@ initial_cap = Dict(
     key => Dict(neighbor => 100.0 for neighbor in keys(value))
     for (key, value) in distances
 )
-initial_share = Dict(key => 1.1 for key in keys(distances))
+initial_share = Dict(key => 1.0 for key in keys(distances))
 t_cap = dict_to_named_array(initial_cap, model_base.config.ids)
 t_share = dict_to_named_vector(initial_share, model_base.config.ids)
 
